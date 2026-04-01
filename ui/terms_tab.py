@@ -188,8 +188,10 @@ class TermsDialog(ctk.CTkToplevel):
         self.geometry("780x620")
         self.resizable(True, True)
         self.configure(fg_color=T["bg_panel"])
-        self.transient(parent)  # child of main window
-        self.lift()             # bring to front without grab_set
+        # Don't set transient — parent may be withdrawn on first launch,
+        # causing some WMs to auto-close this dialog.
+        self.lift()
+        self.focus_force()
         self.protocol("WM_DELETE_WINDOW", on_decline)
 
         # Header

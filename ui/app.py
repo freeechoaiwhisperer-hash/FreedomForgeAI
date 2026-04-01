@@ -88,6 +88,10 @@ class App(ctk.CTk):
             self._check_models()
 
     def _show_terms(self):
+        # Must deiconify before creating a child dialog — some WMs
+        # immediately close transient windows whose parent is withdrawn.
+        self.deiconify()
+        self.geometry("1x1+-9999+-9999")  # off-screen until UI is built
         TermsDialog(
             self,
             on_accept=self._check_models,
