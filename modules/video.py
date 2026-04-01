@@ -1,115 +1,18 @@
 # ============================================================
 #  FreedomForge AI — modules/video.py
-#  Video generation module (ComfyUI / Wan2.1)
+#  Video generation module — uses ComfyUIClient
 # ============================================================
 
-import os
-import json
-import threading
-import subprocess
-import requests
 from typing import Callable
 
-COMFY_URL     = "http://127.0.0.1:8188"
-MODULE_NAME   = "video"
+MODULE_NAME = "video"
 
-# Supported video generators
-GENERATORS = {
-    "wan2.1": {
-        "name":    "Wan2.1",
-        "desc":    "High quality open source video generation",
-        "requires": "ComfyUI + Wan2.1 models",
-        "port":    8188,
-    },
-    "animatediff": {
-        "name":    "AnimateDiff",
-        "desc":    "Smooth animated video from text",
-        "requires": "ComfyUI + AnimateDiff models",
-        "port":    8188,
-    },
-}
-
-
-def is_comfyui_running() -> bool:
-    try:
-        r = requests.get(f"{COMFY_URL}/system_stats", timeout=2)
-        return r.status_code == 200
-    except Exception:
-        return False
-
-
-def get_available_generators() -> list[dict]:
-    available = []
-    if is_comfyui_running():
-        for key, info in GENERATORS.items():
-            available.append({"id": key, **info})
-    return available
-
-
-def generate_video(
-    prompt:    str,
-    generator: str = "wan2.1",
-    on_result: Callable[[str], None] = None,
-    on_error:  Callable[[str], None] = None,
-    on_status: Callable[[str], None] = None,
-) -> None:
-    """Generate video using ComfyUI in background thread."""
-
-    def _generate():
-        try:
-            if not is_comfyui_running():
-                if on_error:
-                    on_error(
-                        "ComfyUI is not running. Start ComfyUI first, "
-                        "then try again. Your ComfyUI setup from before "
-                        "should work — just launch it."
-                    )
-                return
-
-            if on_status:
-                on_status("Sending prompt to ComfyUI...")
-
-            # Basic Wan2.1 workflow
-            workflow = _build_workflow(prompt, generator)
-            r = requests.post(
-                f"{COMFY_URL}/prompt",
-                json={"prompt": workflow},
-                timeout=10,
-            )
-
-            if r.status_code != 200:
-                if on_error:
-                    on_error(f"ComfyUI error: {r.status_code}")
-                return
-
-            prompt_id = r.json().get("prompt_id")
-            if on_status:
-                on_status(f"Generating... (ID: {prompt_id})")
-
-            if on_result:
-                on_result(
-                    f"✅ Video generation started in ComfyUI!\n"
-                    f"Prompt: {prompt}\n"
-                    f"Check ComfyUI at {COMFY_URL} to see progress and download your video."
-                )
-
-        except Exception as e:
-            if on_error:
-                on_error(str(e))
-
-    threading.Thread(target=_generate, daemon=True).start()
-
-
-def _build_workflow(prompt: str, generator: str) -> dict:
-    """Build a basic ComfyUI workflow dict for the given generator."""
-    # This is a simplified placeholder workflow
-    # A real implementation would have the full node graph
-    return {
-        "1": {
-            "class_type": "CLIPTextEncode",
-            "inputs": {"text": prompt, "clip": ["2", 1]},
-        },
-    }
+# Trigger patterns matched by the module router
+TRIGGERS = [
+    r"^/video\b",
+    r"\b(make|create|generate|render)\s+a\s+video\b",
+    r"\bgenerate\s+video\b",
+]
 
 
 def handle(
@@ -117,36 +20,68 @@ def handle(
     on_result: Callable[[str], None],
     on_error:  Callable[[str], None],
 ) -> None:
-    """Entry point called by module router."""
-    # Strip command prefix if present
+    """Entry point called by the module router."""
+    from core import config
+
+    # Strip common command prefixes to get the bare prompt
     prompt = message
-    for prefix in ["/video ", "make a video of ", "generate a video of ",
-                   "create a video of "]:
-        if message.lower().startswith(prefix):
+    for prefix in [
+        "/video ", "make a video of ", "generate a video of ",
+        "create a video of ", "render a video of ",
+        "make a video ", "generate a video ", "create a video ",
+    ]:
+        if message.lower().startswith(prefix.lower()):
             prompt = message[len(prefix):].strip()
             break
 
     if not prompt:
-        on_error("Please describe what video you want to create.")
+        on_error("Please describe what you want in the video, e.g. '/video a cat on a surfboard'")
         return
 
-    generators = get_available_generators()
-
-    if not generators:
+    if not config.get("video_enabled", False):
         on_result(
             "🎬 **Video Generation**\n\n"
-            "ComfyUI is not currently running on your machine.\n\n"
-            "To generate videos:\n"
-            "1. Start ComfyUI (you already have it set up with Wan2.1)\n"
-            "2. Come back and ask again\n\n"
-            f"Your prompt has been saved: *\"{prompt}\"*\n"
-            "Ready to go as soon as ComfyUI is running!"
+            "The video module isn't installed yet.\n\n"
+            "Go to the **🎬 Video** tab and click **Install Video Module** to set it up.\n\n"
+            f"Your prompt is ready: *\"{prompt}\"*"
         )
         return
 
-    generate_video(
+    from modules.comfy_client import get_client
+    client = get_client()
+
+    if not client.is_installed():
+        on_result(
+            "🎬 **Video Generation**\n\n"
+            "ComfyUI is not installed at the configured path.\n"
+            "Go to **🎬 Video** → **Install Video Module** to fix this."
+        )
+        return
+
+    def _on_complete(files):
+        if files:
+            paths = "\n".join(f"📹 `{f}`" for f in files)
+            on_result(
+                f"🎬 **Video ready!**\n\n"
+                f"Prompt: *{prompt}*\n\n"
+                f"{paths}"
+            )
+        else:
+            on_result(
+                "🎬 Generation finished, but no output files were found.\n"
+                "Check ComfyUI's output folder manually."
+            )
+
+    def _on_error(msg):
+        on_error(f"🎬 Video error: {msg}")
+
+    def _on_status(msg):
+        on_result(f"🎬 {msg}")
+
+    client.generate(
         prompt=prompt,
-        generator="wan2.1",
-        on_result=on_result,
-        on_error=on_error,
+        workflow_name="ltx_video",
+        on_status=_on_status,
+        on_complete=_on_complete,
+        on_error=_on_error,
     )
