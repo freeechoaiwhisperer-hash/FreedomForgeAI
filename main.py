@@ -34,6 +34,13 @@ from ui.app import App
 def main():
     app = App()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
+
+    # Patch tkinter's silent exception handler to log crashes to app.log
+    import traceback as _tb
+    def _log_tk_error(exc, val, tb):
+        logger.error("Tkinter callback exception:\n" + "".join(_tb.format_exception(exc, val, tb)))
+    app.report_callback_exception = _log_tk_error
+
     app.mainloop()
 
 

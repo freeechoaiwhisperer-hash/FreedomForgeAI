@@ -100,12 +100,14 @@ class App(ctk.CTk):
         )
 
     def _check_models(self):
-        models = model_manager.get_model_list()
-        if not models:
+        from ui.wizard import should_run_wizard
+        if should_run_wizard():
+            # First-ever launch — walk user through setup
             self.deiconify()
             theme_name = config.get("theme", "Midnight")
             SetupWizard(self, self._wizard_done, theme_name)
         else:
+            # Setup already done — show main UI; user downloads models via Models tab
             self.deiconify()
             self._build_ui()
             self._auto_load()
@@ -117,6 +119,10 @@ class App(ctk.CTk):
                 w.destroy()
             except Exception:
                 pass
+        # Restore proper window state — wizard may have altered these
+        self.resizable(True, True)
+        self.minsize(980, 640)
+        self.geometry("1380x860")
         self.deiconify()
         self._build_ui()
         self._auto_load()
@@ -205,6 +211,11 @@ class App(ctk.CTk):
 
     def _build_ui(self):
         T = self._theme
+
+        # Ensure window is properly configured regardless of prior state
+        self.resizable(True, True)
+        self.minsize(980, 640)
+        self.title(f"FreedomForge AI  v{APP_VERSION}")
 
         # Top bar
         top = ctk.CTkFrame(
