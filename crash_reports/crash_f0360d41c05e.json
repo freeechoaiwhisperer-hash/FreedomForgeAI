@@ -1,0 +1,13 @@
+{
+  "id": "f0360d41c05e",
+  "timestamp": "2026-04-01T16:35:59.586066+00:00",
+  "version": "0.1.0-alpha",
+  "context": "Unhandled exception",
+  "error": "ModuleNotFoundError",
+  "message": "No module named 'customtkinter'",
+  "traceback": "NoneType: None\n",
+  "system": {
+    "os": "Linux",
+    "python": "3.13.5 (main, Jun 25"
+  }
+}

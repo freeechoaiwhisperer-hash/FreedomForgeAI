@@ -1,0 +1,12 @@
+{
+  "last_model": null,
+  "n_ctx": 4096,
+  "voice_in": false,
+  "voice_out": false,
+  "dark_mode": true,
+  "font_size": 13,
+  "unlocked": false,
+  "personality": "normal",
+  "agent_enabled": false,
+  "language": "en"
+}

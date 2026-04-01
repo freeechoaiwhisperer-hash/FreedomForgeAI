@@ -1,0 +1,7 @@
+2026-04-01 12:35:59  INFO      FreedomForge AI starting
+2026-04-01 12:35:59  WARNING   cryptography not installed — encryption disabled. Run: pip install cryptography
+2026-04-01 13:00:18  INFO      FreedomForge AI starting
+2026-04-01 13:00:18  INFO      Encryption key generated and saved
+2026-04-01 13:00:18  INFO      Encryption initialised (key fingerprint: a6742977f79da728)
+2026-04-01 13:00:44  INFO      FreedomForge AI starting
+2026-04-01 13:00:44  INFO      Encryption initialised (key fingerprint: a6742977f79da728)
