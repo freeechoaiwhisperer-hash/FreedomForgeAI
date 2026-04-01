@@ -338,18 +338,45 @@ class App(ctk.CTk):
 
         self.switch_panel("Chat")
 
+        # Fix mousewheel scrolling on Linux/Windows/macOS
+        from utils.scroll_fix import enable_mousewheel_scroll
+        self.after(200, lambda: enable_mousewheel_scroll(self))
+
     def _build_toggles(self, top):
         T = self._theme
-        # Compact: label text lives on the switch itself — no separate CTkLabel
-        toggles = [
-            ("🤖 Agent",  "agent_var", self._toggle_agent,  False),
-            ("🔊 Voice",  "tts_var",   self._toggle_tts,    config.get("voice_out", False)),
-            ("🎤 Mic",    "voice_var", self._toggle_voice,  config.get("voice_in", False)),
-        ]
-        # Container keeps all three switches together and prevents them
-        # from overlapping the logo on narrow windows
+
         tog_frame = ctk.CTkFrame(top, fg_color="transparent")
         tog_frame.pack(side="right", padx=8)
+
+        # Network kill switch — red when active, lives furthest right
+        self.net_var = ctk.BooleanVar(value=False)
+        self._net_sw = ctk.CTkSwitch(
+            tog_frame,
+            text="🌐 Net Kill",
+            variable=self.net_var,
+            onvalue=True, offvalue=False,
+            command=self._toggle_network,
+            width=40, height=22,
+            font=("Arial", 10, "bold"),
+            text_color=T["red"],
+            button_color=T["red"],
+            button_hover_color="#cc0000",
+        )
+        self._net_sw.pack(side="right", padx=(0, 14))
+
+        # Divider
+        ctk.CTkFrame(tog_frame, width=1, height=22,
+                     fg_color=T["divider"]).pack(side="right", padx=6)
+
+        # Regular toggles
+        toggles = [
+            ("🖱️ Let Bot Click", "agent_var", self._toggle_agent,
+             False),
+            ("🔊 Voice",         "tts_var",   self._toggle_tts,
+             config.get("voice_out", False)),
+            ("🎤 Mic",           "voice_var", self._toggle_voice,
+             config.get("voice_in", False)),
+        ]
         for label, attr, cmd, default in reversed(toggles):
             var = ctk.BooleanVar(value=default)
             setattr(self, attr, var)
@@ -562,6 +589,34 @@ class App(ctk.CTk):
 
     def _toggle_voice(self):
         config.set("voice_in", self.voice_var.get())
+
+    def _toggle_network(self):
+        from core import privacy
+        on = self.net_var.get()
+        T  = self._theme
+
+        def _result(ok, msg):
+            color = T["red"] if (on and ok) else T["text_dim"]
+            def _ui():
+                try:
+                    self._net_sw.configure(text_color=color)
+                except Exception:
+                    pass
+                try:
+                    if on and ok:
+                        self.chat_panel.sys_message("🌐 ⛔ Network BLOCKED — all internet cut off.")
+                    elif not on and ok:
+                        self.chat_panel.sys_message("🌐 ✅ Network restored.")
+                    else:
+                        self.chat_panel.sys_message(f"🌐 ❌ Kill switch failed: {msg}")
+                except Exception:
+                    pass
+            self.after(0, _ui)
+
+        if on:
+            privacy.network_kill(on_result=_result)
+        else:
+            privacy.network_restore(on_result=_result)
 
     # ── Close ─────────────────────────────────────────────────
 

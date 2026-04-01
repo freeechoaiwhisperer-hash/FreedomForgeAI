@@ -14,6 +14,8 @@ except ImportError:
 
 try:
     import speech_recognition as sr
+    # sr requires pyaudio for microphone access — check explicitly
+    import pyaudio as _pa
     SR_AVAILABLE = True
 except ImportError:
     SR_AVAILABLE = False
@@ -68,7 +70,12 @@ def listen(
 ) -> None:
     """Listen for speech in a background thread."""
     if not SR_AVAILABLE:
-        on_error("SpeechRecognition not installed. Run: pip install SpeechRecognition pyaudio")
+        on_error(
+            "🎤 Microphone requires PyAudio.\n\n"
+            "On Windows: the installer handles this automatically.\n"
+            "On Linux: run  sudo apt install portaudio19-dev  then  pip install pyaudio\n"
+            "On macOS: run  brew install portaudio  then  pip install pyaudio"
+        )
         return
 
     def _listen():

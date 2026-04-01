@@ -8,5 +8,6 @@
   "unlocked": false,
   "personality": "normal",
   "agent_enabled": false,
-  "language": "en"
+  "language": "en",
+  "terms_accepted": true
 }

@@ -98,8 +98,26 @@ info "Installing GPU utilities..."
 if ($LASTEXITCODE -eq 0) { ok "GPU utilities installed" } else { warn "GPUtil optional -- GPU% monitor disabled" }
 
 info "Installing audio packages..."
-& $pip install "pyaudio>=0.2.13" --quiet 2>$null
-if ($LASTEXITCODE -eq 0) { ok "Audio installed" } else { warn "pyaudio optional -- voice input may not work" }
+# PyAudio on Windows needs a pre-built wheel — try pipwin first, then direct
+& $pip install pipwin --quiet 2>$null
+$audioOk = $false
+if ($LASTEXITCODE -eq 0) {
+    & pipwin install pyaudio 2>$null
+    if ($LASTEXITCODE -eq 0) { $audioOk = $true }
+}
+if (-not $audioOk) {
+    # Fallback: pre-built wheel from Christoph Gohlke's collection
+    $pyVer = (& $pythonCmd -c "import sys; print(f'{sys.version_info.major}{sys.version_info.minor}')" 2>$null).Trim()
+    $arch  = if ([Environment]::Is64BitProcess) { "win_amd64" } else { "win32" }
+    $whlUrl = "https://files.pythonhosted.org/packages/py3/P/PyAudio/PyAudio-0.2.14-cp${pyVer}-cp${pyVer}-${arch}.whl"
+    & $pip install $whlUrl --quiet 2>$null
+    if ($LASTEXITCODE -eq 0) { $audioOk = $true }
+}
+if (-not $audioOk) {
+    & $pip install "pyaudio>=0.2.13" --quiet 2>$null
+    if ($LASTEXITCODE -eq 0) { $audioOk = $true }
+}
+if ($audioOk) { ok "PyAudio installed — microphone ready" } else { warn "PyAudio optional — run: pip install pyaudio  to enable mic" }
 
 # ── AI engine ────────────────────────────────────────────────
 step "AI engine (llama-cpp-python)"
