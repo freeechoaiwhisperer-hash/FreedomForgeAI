@@ -3,6 +3,8 @@
 #  Chat panel — streaming responses, themed, polished
 # ============================================================
 
+import os
+import datetime
 import customtkinter as ctk
 from core import config, model_manager, tts
 from assets.i18n import t
@@ -67,6 +69,18 @@ class ChatPanel(ctk.CTkFrame):
             text_color=T["green"],
         )
         self.status_lbl.pack(side="left", padx=16)
+
+        ctk.CTkButton(
+            bar,
+            text="💾 Export",
+            width=72, height=30,
+            corner_radius=6,
+            fg_color=T["bg_hover"],
+            hover_color=T["bg_card"],
+            text_color=T["text_secondary"],
+            font=("Arial", 11),
+            command=self._export,
+        ).pack(side="right", padx=(0, 4))
 
         ctk.CTkButton(
             bar,
@@ -231,6 +245,23 @@ class ChatPanel(ctk.CTkFrame):
             self.chat_box.configure(state="disabled")
         except Exception:
             pass
+
+    def _export(self):
+        """Save the full conversation text to ~/Downloads/chat_TIMESTAMP.txt"""
+        try:
+            text = self.chat_box.get("1.0", "end").strip()
+            if not text:
+                self.sys_message("💾 Nothing to export yet.")
+                return
+            ts   = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            path = os.path.join(
+                os.path.expanduser("~"), "Downloads", f"chat_{ts}.txt")
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(text)
+            self.sys_message(f"💾 Saved → {path}")
+        except Exception as e:
+            self.sys_message(f"❌ Export failed: {e}")
 
     # ── Send message ─────────────────────────────────────────
 
