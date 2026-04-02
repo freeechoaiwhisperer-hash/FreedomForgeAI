@@ -9,10 +9,13 @@ def _get_models_dir():
     cfg = Path.home() / ".freedomforge" / "config.json"
     if cfg.exists():
         try:
-            data = json.load(open(cfg))
-            p = data.get("models_path","").strip()
-            if p and Path(p).exists(): return Path(p)
-        except: pass
+            with open(cfg) as f:
+                data = json.load(f)
+            p = data.get("models_path", "").strip()
+            if p and Path(p).exists():
+                return Path(p)
+        except Exception:
+            pass
     return APP_ROOT / "models"
 MODELS_DIR  = _get_models_dir()
 LOGS_DIR    = APP_ROOT / "logs"

@@ -20,6 +20,9 @@ DEFAULTS = {
     "unlocked":       False,
     "personality":    "normal",
     "agent_enabled":  False,
+    "theme":          "dark",
+    "language":       "en",
+    "lora_adapter":   "",
 }
 
 _config: dict = {}

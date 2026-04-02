@@ -13,6 +13,7 @@ import customtkinter as ctk
 from core import model_manager, logger
 from core.trainer import get_idle_trainer, ModelTrainer
 from utils.paths import MODELS_DIR
+from training.trainer import LocalTrainer
 
 try:
     import peft        # noqa: F401
@@ -563,7 +564,7 @@ class TrainingPanel(ctk.CTkFrame):
 
         ctk.CTkLabel(
             self._lora_card,
-            text="One example per line.  Format:  input|output",
+            text="One example per line.  Format:  Instruction: …|Output: …",
             font=("Arial", 10),
             text_color=T["text_dim"],
             anchor="w",
@@ -720,8 +721,9 @@ class TrainingPanel(ctk.CTkFrame):
         except Exception:
             pass
 
-        self._lora_running = True
-        self._lora_thread  = threading.Thread(
+        self._lora_stop_event = threading.Event()
+        self._lora_running    = True
+        self._lora_thread     = threading.Thread(
             target=self._lora_worker,
             args=(examples, adapter_name, model),
             daemon=True)
@@ -730,129 +732,20 @@ class TrainingPanel(ctk.CTkFrame):
 
     def _lora_stop(self):
         self._lora_running = False
+        if hasattr(self, "_lora_stop_event"):
+            self._lora_stop_event.set()
 
     def _lora_worker(self, examples, adapter_name, model_name):
-        q = self._lora_q
-        try:
-            import torch
-            from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
-            from peft import get_peft_model, LoraConfig, TaskType
-            from datasets import Dataset
-
-            q.put(("log", "Loading tokenizer…"))
-            model_path = str(MODELS_DIR / model_name) if hasattr(MODELS_DIR, "__truediv__") else os.path.join(str(MODELS_DIR), model_name)
-
-            # Use a small base for LoRA if GGUF (quantized) — explain limitation
-            if model_name.endswith(".gguf"):
-                q.put(("log", "⚠ GGUF models can't be LoRA fine-tuned directly."))
-                q.put(("log", "  Use a HuggingFace model ID instead (e.g. microsoft/phi-2)."))
-                q.put(("log", "  Falling back to tiny demo model: sshleifer/tiny-gpt2"))
-                hf_model = "sshleifer/tiny-gpt2"
-            else:
-                hf_model = model_name
-
-            tokenizer = AutoTokenizer.from_pretrained(hf_model)
-            if tokenizer.pad_token is None:
-                tokenizer.pad_token = tokenizer.eos_token
-
-            q.put(("log", f"Loading base model: {hf_model}"))
-            q.put(("progress", 0.1))
-            base = AutoModelForCausalLM.from_pretrained(
-                hf_model,
-                torch_dtype=torch.float32,
-            )
-
-            lora_cfg = LoraConfig(
-                task_type=TaskType.CAUSAL_LM,
-                r=8, lora_alpha=16,
-                target_modules=["q_proj", "v_proj"],
-                lora_dropout=0.05,
-                bias="none",
-            )
-            peft_model = get_peft_model(base, lora_cfg)
-            q.put(("log", f"LoRA adapter attached. Trainable params: "
-                          f"{sum(p.numel() for p in peft_model.parameters() if p.requires_grad):,}"))
-            q.put(("progress", 0.2))
-
-            # Build dataset
-            texts = [f"{inp}\n{out}" for inp, out in examples]
-            enc   = tokenizer(texts, truncation=True, padding=True,
-                              max_length=128, return_tensors="pt")
-            enc["labels"] = enc["input_ids"].clone()
-            ds = Dataset.from_dict({k: v.tolist() for k, v in enc.items()})
-            q.put(("log", f"Dataset ready: {len(ds)} example(s)"))
-            q.put(("progress", 0.3))
-
-            out_dir = os.path.join(os.path.expanduser("~"), ".freedomforge",
-                                   "lora_adapters", adapter_name)
-            os.makedirs(out_dir, exist_ok=True)
-
-            args = TrainingArguments(
-                output_dir=out_dir,
-                num_train_epochs=3,
-                per_device_train_batch_size=1,
-                logging_steps=1,
-                save_steps=999999,
-                no_cuda=not torch.cuda.is_available(),
-                report_to="none",
-            )
-
-            total_steps = max(len(ds) * args.num_train_epochs, 1)
-
-            class _LogCb:
-                def __init__(self, q, total, running_ref):
-                    self.q = q; self.total = total; self.step = 0
-                    self.running_ref = running_ref
-                def on_log(self, a, state, control, logs=None, **kw):
-                    if logs:
-                        loss = logs.get("loss", "")
-                        lr   = logs.get("learning_rate", "")
-                        self.q.put(("log", f"  step {state.global_step}  loss={loss}  lr={lr}"))
-                        self.step = state.global_step
-                        pct = 0.3 + 0.65 * min(self.step / self.total, 1.0)
-                        self.q.put(("progress", pct))
-                    if not self.running_ref[0]:
-                        control.should_training_stop = True
-
-            running = [True]
-            def _stop_check():
-                running[0] = self._lora_running
-
-            from transformers import TrainerCallback
-            class _StopCb(TrainerCallback):
-                def on_step_end(self, a, state, control, **kw):
-                    _stop_check()
-                    if not running[0]:
-                        control.should_training_stop = True
-                    return control
-
-            log_cb  = _LogCb(q, total_steps, running)
-            stop_cb = _StopCb()
-
-            trainer_obj = Trainer(
-                model=peft_model,
-                args=args,
-                train_dataset=ds,
-                callbacks=[stop_cb],
-            )
-            # Monkey-patch log callback
-            trainer_obj.add_callback(type("LC", (), {"on_log": log_cb.on_log})())
-
-            q.put(("log", "Training started…"))
-            trainer_obj.train()
-
-            if self._lora_running:
-                peft_model.save_pretrained(out_dir)
-                q.put(("log", f"✅ Adapter saved → {out_dir}"))
-                q.put(("progress", 1.0))
-                q.put(("done", f"Done! Adapter saved to {out_dir}"))
-            else:
-                q.put(("log", "⏹ Training stopped by user."))
-                q.put(("done", "Stopped."))
-
-        except Exception as e:
-            q.put(("log", f"❌ Error: {e}"))
-            q.put(("done", f"Failed: {e}"))
+        trainer = LocalTrainer(
+            examples=examples,
+            adapter_name=adapter_name,
+            model_id=model_name,
+            progress_q=self._lora_q,
+            stop_event=self._lora_stop_event,
+            epochs=3,
+            max_length=128,
+        )
+        trainer.run()
 
     def _lora_poll(self):
         T = self.theme

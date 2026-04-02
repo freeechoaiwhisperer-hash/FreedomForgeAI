@@ -3,6 +3,8 @@
 #  Settings panel — themes, language, voice, AI, personality
 # ============================================================
 
+import os
+import threading
 import customtkinter as ctk
 from core import config
 from assets.i18n import t, language_options, display_name_to_code, get_language
@@ -191,6 +193,9 @@ class SettingsPanel(ctk.CTkFrame):
             text_color=T["text_secondary"],
         ).pack(anchor="w", padx=16, pady=(0, 10))
 
+        # ── LoRA Adapter ──────────────────────────────────────
+        self._build_adapter_section(card4)
+
         # ── Special Features ──────────────────────────────────
         self._section(scroll, t("settings_special"))
         card5 = self._card(scroll)
@@ -286,6 +291,127 @@ class SettingsPanel(ctk.CTkFrame):
             text_color=T["text_secondary"],
         )
         self._pers_desc.pack(anchor="w", padx=16, pady=(0, 10))
+
+    # ── UI helpers ───────────────────────────────────────────
+
+    def _build_adapter_section(self, parent):
+        T = self.theme
+
+        row = self._row(parent, "🔌  LoRA Adapter",
+                        "Load a fine-tuned adapter onto the current model")
+
+        # Discover adapters
+        try:
+            from training.trainer import get_available_adapters
+            adapter_paths = get_available_adapters()
+        except Exception:
+            adapter_paths = []
+
+        choices     = ["None (base model)"] + [p.name for p in adapter_paths]
+        self._adapter_paths = {p.name: p for p in adapter_paths}
+
+        saved = config.get("lora_adapter", "")
+        initial = saved if saved in self._adapter_paths else "None (base model)"
+
+        self._adapter_var = ctk.StringVar(value=initial)
+        self._adapter_menu = ctk.CTkOptionMenu(
+            row,
+            variable=self._adapter_var,
+            values=choices,
+            command=self._apply_adapter,
+            width=200,
+            fg_color=T["bg_hover"],
+            button_color=T["accent"],
+            button_hover_color=T["accent_hover"],
+            text_color=T["text_primary"],
+            dropdown_fg_color=T["bg_panel"],
+            dropdown_text_color=T["text_primary"],
+            dropdown_hover_color=T["bg_hover"],
+        )
+        self._adapter_menu.pack(side="right")
+
+        # Refresh button to re-scan adapters folder
+        ctk.CTkButton(
+            row,
+            text="↻",
+            width=32, height=32,
+            corner_radius=6,
+            fg_color=T["bg_hover"],
+            hover_color=T["accent"],
+            text_color=T["text_primary"],
+            font=("Arial", 14),
+            command=lambda: self._refresh_adapters(),
+        ).pack(side="right", padx=(0, 6))
+
+        self._adapter_status = ctk.CTkLabel(
+            parent,
+            text=f"  Active: {initial}" if initial != "None (base model)" else "",
+            font=("Arial", 10),
+            text_color=T["text_dim"],
+            anchor="w",
+        )
+        self._adapter_status.pack(anchor="w", padx=16, pady=(0, 8))
+
+    def _apply_adapter(self, choice: str):
+        T = self.theme
+        config.set("lora_adapter", "" if choice == "None (base model)" else choice)
+
+        if choice == "None (base model)":
+            self._adapter_status.configure(text="  No adapter loaded.")
+            return
+
+        adapter_path = self._adapter_paths.get(choice)
+        if adapter_path is None:
+            self._adapter_status.configure(
+                text="  ⚠ Adapter path not found.",
+                text_color=T.get("yellow", "#ffcc00"))
+            return
+
+        # Load adapter onto current model via model_manager
+        try:
+            from core import model_manager
+            from training.trainer import load_adapter
+
+            raw_model = getattr(model_manager, "_model", None)
+            if raw_model is None:
+                self._adapter_status.configure(
+                    text="  ⚠ No model loaded. Load a model first.",
+                    text_color=T.get("yellow", "#ffcc00"))
+                return
+
+            self._adapter_status.configure(
+                text=f"  Loading {choice}…",
+                text_color=T["text_secondary"])
+            self.update_idletasks()
+
+            def _run():
+                new_model = load_adapter(raw_model, adapter_path)
+                model_manager._model = new_model
+                self.after(0, lambda: self._adapter_status.configure(
+                    text=f"  ✅ Adapter active: {choice}",
+                    text_color=T.get("green", "#44ff88")))
+
+            threading.Thread(target=_run, daemon=True).start()
+
+        except Exception as exc:
+            self._adapter_status.configure(
+                text=f"  ❌ {exc}",
+                text_color=T.get("red", "#ff4444"))
+
+    def _refresh_adapters(self):
+        """Re-scan adapter directories and rebuild the dropdown."""
+        try:
+            from training.trainer import get_available_adapters
+            adapter_paths = get_available_adapters()
+        except Exception:
+            adapter_paths = []
+
+        self._adapter_paths = {p.name: p for p in adapter_paths}
+        choices = ["None (base model)"] + list(self._adapter_paths.keys())
+        self._adapter_menu.configure(values=choices)
+        self._adapter_status.configure(
+            text=f"  Found {len(adapter_paths)} adapter(s).",
+            text_color=self.theme["text_dim"])
 
     # ── UI helpers ───────────────────────────────────────────
 
