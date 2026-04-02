@@ -4,11 +4,22 @@
 #  Stupidly simple. Grandma can use it.
 # ============================================================
 
+import os
+import queue
+import subprocess
+import sys
 import threading
 import customtkinter as ctk
 from core import model_manager, logger
 from core.trainer import get_idle_trainer, ModelTrainer
 from utils.paths import MODELS_DIR
+
+try:
+    import peft        # noqa: F401
+    import transformers  # noqa: F401
+    PEFT_AVAILABLE = True
+except Exception:
+    PEFT_AVAILABLE = False
 
 
 SKILLS = [
@@ -264,6 +275,11 @@ class TrainingPanel(ctk.CTkFrame):
         self._progress_card = self._card(scroll)
         self._build_progress()
 
+        # ── Advanced Training (LoRA) ─────────────────────────
+        self._section(scroll, "🧬  Advanced Training (LoRA)")
+        self._lora_card = self._card(scroll)
+        self._build_lora_section()
+
         # Wire up idle trainer callbacks
         trainer = get_idle_trainer()
         trainer.set_progress_callback(self._on_progress)
@@ -441,6 +457,427 @@ class TrainingPanel(ctk.CTkFrame):
             self.after(10000, self._refresh_stats)
         except Exception:
             pass
+
+    # ── LoRA section ─────────────────────────────────────────
+
+    def _build_lora_section(self):
+        T = self.theme
+        for w in self._lora_card.winfo_children():
+            w.destroy()
+
+        if not PEFT_AVAILABLE:
+            self._build_lora_unavailable()
+        else:
+            self._build_lora_ui()
+
+    def _build_lora_unavailable(self):
+        T = self.theme
+
+        ctk.CTkLabel(
+            self._lora_card,
+            text="Advanced training requires extra packages.  (~2 GB download)",
+            font=("Arial", 12),
+            text_color=T["text_secondary"],
+            anchor="w",
+        ).pack(padx=16, pady=(14, 4), anchor="w")
+
+        ctk.CTkLabel(
+            self._lora_card,
+            text="Installs: transformers  peft  datasets  accelerate",
+            font=("Arial", 11),
+            text_color=T["text_dim"],
+            anchor="w",
+        ).pack(padx=16, anchor="w")
+
+        btn_row = ctk.CTkFrame(self._lora_card, fg_color="transparent")
+        btn_row.pack(fill="x", padx=16, pady=(10, 14))
+
+        self._install_btn = ctk.CTkButton(
+            btn_row,
+            text="⬇  Install",
+            width=120, height=36, corner_radius=8,
+            font=("Arial", 13, "bold"),
+            fg_color=T["accent"], hover_color=T["accent_hover"],
+            command=self._install_lora_deps,
+        )
+        self._install_btn.pack(side="left")
+
+        self._install_status = ctk.CTkLabel(
+            btn_row, text="",
+            font=("Arial", 11),
+            text_color=T["text_secondary"],
+        )
+        self._install_status.pack(side="left", padx=12)
+
+    def _install_lora_deps(self):
+        T = self.theme
+        self._install_btn.configure(state="disabled", text="Installing…")
+        self._install_status.configure(text="This may take a few minutes…")
+
+        def _run():
+            pkgs = ["transformers", "peft", "datasets", "accelerate"]
+            cmd  = [sys.executable, "-m", "pip", "install"] + pkgs
+            try:
+                proc = subprocess.run(
+                    cmd, capture_output=True, text=True, timeout=600)
+                if proc.returncode == 0:
+                    self.after(0, self._on_install_done)
+                else:
+                    err = (proc.stderr or proc.stdout or "unknown error")[-200:]
+                    self.after(0, lambda: self._on_install_error(err))
+            except Exception as e:
+                self.after(0, lambda: self._on_install_error(str(e)))
+
+        threading.Thread(target=_run, daemon=True).start()
+
+    def _on_install_done(self):
+        global PEFT_AVAILABLE
+        try:
+            import peft        # noqa: F401
+            import transformers  # noqa: F401
+            PEFT_AVAILABLE = True
+        except Exception:
+            pass
+        self._build_lora_section()
+
+    def _on_install_error(self, err: str):
+        try:
+            self._install_btn.configure(state="normal", text="↻  Retry")
+            self._install_status.configure(
+                text=f"❌ Install failed: {err}",
+                text_color=self.theme.get("red", "#ff4444"))
+        except Exception:
+            pass
+
+    def _build_lora_ui(self):
+        T = self.theme
+
+        # ── Training examples ────────────────────────────────
+        ctk.CTkLabel(
+            self._lora_card,
+            text="Training Examples",
+            font=("Arial", 12, "bold"),
+            text_color=T["text_primary"],
+            anchor="w",
+        ).pack(padx=16, pady=(14, 2), anchor="w")
+
+        ctk.CTkLabel(
+            self._lora_card,
+            text="One example per line.  Format:  input|output",
+            font=("Arial", 10),
+            text_color=T["text_dim"],
+            anchor="w",
+        ).pack(padx=16, anchor="w")
+
+        self._lora_examples = ctk.CTkTextbox(
+            self._lora_card,
+            height=120,
+            font=("Arial", 12),
+            fg_color=T["bg_input"],
+            text_color=T["text_primary"],
+            border_color=T["border"],
+            border_width=1,
+            wrap="word",
+        )
+        self._lora_examples.pack(fill="x", padx=16, pady=(6, 0))
+        self._lora_examples.insert(
+            "1.0",
+            "What is 2+2?|The answer is 4.\n"
+            "Translate to French: Hello|Bonjour\n")
+
+        # ── Adapter name ─────────────────────────────────────
+        name_row = ctk.CTkFrame(self._lora_card, fg_color="transparent")
+        name_row.pack(fill="x", padx=16, pady=(10, 0))
+
+        ctk.CTkLabel(
+            name_row, text="Adapter Name:",
+            font=("Arial", 12),
+            text_color=T["text_primary"],
+            width=120, anchor="w",
+        ).pack(side="left")
+
+        self._lora_name = ctk.CTkEntry(
+            name_row,
+            placeholder_text="my-custom-adapter",
+            font=("Arial", 12), height=34,
+            fg_color=T["bg_input"],
+            text_color=T["text_primary"],
+            border_color=T["border"],
+        )
+        self._lora_name.pack(side="left", fill="x", expand=True, padx=(8, 0))
+
+        # ── Start button + progress bar ───────────────────────
+        ctrl_row = ctk.CTkFrame(self._lora_card, fg_color="transparent")
+        ctrl_row.pack(fill="x", padx=16, pady=(10, 0))
+
+        self._lora_start_btn = ctk.CTkButton(
+            ctrl_row,
+            text="▶  Start Training",
+            width=160, height=38, corner_radius=8,
+            font=("Arial", 13, "bold"),
+            fg_color=T["accent"], hover_color=T["accent_hover"],
+            command=self._lora_start,
+        )
+        self._lora_start_btn.pack(side="left")
+
+        self._lora_stop_btn = ctk.CTkButton(
+            ctrl_row,
+            text="⏹ Stop",
+            width=80, height=38, corner_radius=8,
+            font=("Arial", 12),
+            fg_color="#3a1212", hover_color="#5a1a1a",
+            text_color=T["text_secondary"],
+            state="disabled",
+            command=self._lora_stop,
+        )
+        self._lora_stop_btn.pack(side="left", padx=(8, 0))
+
+        self._lora_status = ctk.CTkLabel(
+            ctrl_row, text="",
+            font=("Arial", 11),
+            text_color=T["text_secondary"],
+        )
+        self._lora_status.pack(side="left", padx=12)
+
+        self._lora_bar = ctk.CTkProgressBar(
+            self._lora_card, height=8,
+            progress_color=T["accent"],
+            fg_color=T["bg_hover"],
+        )
+        self._lora_bar.set(0)
+        self._lora_bar.pack(fill="x", padx=16, pady=(8, 0))
+
+        # ── Log output ────────────────────────────────────────
+        ctk.CTkLabel(
+            self._lora_card,
+            text="Training Log",
+            font=("Arial", 11, "bold"),
+            text_color=T["text_secondary"],
+            anchor="w",
+        ).pack(padx=16, pady=(10, 2), anchor="w")
+
+        self._lora_log = ctk.CTkTextbox(
+            self._lora_card,
+            height=130,
+            font=("Courier", 10),
+            fg_color=T["bg_deep"],
+            text_color=T["text_secondary"],
+            border_color=T["border"],
+            border_width=1,
+            state="disabled",
+            wrap="word",
+        )
+        self._lora_log.pack(fill="x", padx=16, pady=(0, 14))
+
+        self._lora_q      = queue.Queue()
+        self._lora_thread = None
+
+    # ── LoRA training logic ───────────────────────────────────
+
+    def _lora_log_append(self, text: str):
+        try:
+            self._lora_log.configure(state="normal")
+            self._lora_log.insert("end", text + "\n")
+            self._lora_log.see("end")
+            self._lora_log.configure(state="disabled")
+        except Exception:
+            pass
+
+    def _lora_start(self):
+        T = self.theme
+
+        raw = self._lora_examples.get("1.0", "end").strip()
+        if not raw:
+            self._lora_status.configure(
+                text="⚠ Add at least one training example.",
+                text_color=T.get("yellow", "#ffcc00"))
+            return
+
+        examples = [
+            line.split("|", 1)
+            for line in raw.splitlines()
+            if "|" in line
+        ]
+        if not examples:
+            self._lora_status.configure(
+                text="⚠ Format: input|output  (one per line)",
+                text_color=T.get("yellow", "#ffcc00"))
+            return
+
+        adapter_name = self._lora_name.get().strip() or "my-adapter"
+        model        = model_manager.get_current_model()
+
+        self._lora_start_btn.configure(state="disabled", text="Training…")
+        self._lora_stop_btn.configure(state="normal")
+        self._lora_status.configure(
+            text="Starting…", text_color=T["text_secondary"])
+        self._lora_bar.set(0)
+
+        try:
+            self._lora_log.configure(state="normal")
+            self._lora_log.delete("1.0", "end")
+            self._lora_log.configure(state="disabled")
+        except Exception:
+            pass
+
+        self._lora_running = True
+        self._lora_thread  = threading.Thread(
+            target=self._lora_worker,
+            args=(examples, adapter_name, model),
+            daemon=True)
+        self._lora_thread.start()
+        self.after(150, self._lora_poll)
+
+    def _lora_stop(self):
+        self._lora_running = False
+
+    def _lora_worker(self, examples, adapter_name, model_name):
+        q = self._lora_q
+        try:
+            import torch
+            from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
+            from peft import get_peft_model, LoraConfig, TaskType
+            from datasets import Dataset
+
+            q.put(("log", "Loading tokenizer…"))
+            model_path = str(MODELS_DIR / model_name) if hasattr(MODELS_DIR, "__truediv__") else os.path.join(str(MODELS_DIR), model_name)
+
+            # Use a small base for LoRA if GGUF (quantized) — explain limitation
+            if model_name.endswith(".gguf"):
+                q.put(("log", "⚠ GGUF models can't be LoRA fine-tuned directly."))
+                q.put(("log", "  Use a HuggingFace model ID instead (e.g. microsoft/phi-2)."))
+                q.put(("log", "  Falling back to tiny demo model: sshleifer/tiny-gpt2"))
+                hf_model = "sshleifer/tiny-gpt2"
+            else:
+                hf_model = model_name
+
+            tokenizer = AutoTokenizer.from_pretrained(hf_model)
+            if tokenizer.pad_token is None:
+                tokenizer.pad_token = tokenizer.eos_token
+
+            q.put(("log", f"Loading base model: {hf_model}"))
+            q.put(("progress", 0.1))
+            base = AutoModelForCausalLM.from_pretrained(
+                hf_model,
+                torch_dtype=torch.float32,
+            )
+
+            lora_cfg = LoraConfig(
+                task_type=TaskType.CAUSAL_LM,
+                r=8, lora_alpha=16,
+                target_modules=["q_proj", "v_proj"],
+                lora_dropout=0.05,
+                bias="none",
+            )
+            peft_model = get_peft_model(base, lora_cfg)
+            q.put(("log", f"LoRA adapter attached. Trainable params: "
+                          f"{sum(p.numel() for p in peft_model.parameters() if p.requires_grad):,}"))
+            q.put(("progress", 0.2))
+
+            # Build dataset
+            texts = [f"{inp}\n{out}" for inp, out in examples]
+            enc   = tokenizer(texts, truncation=True, padding=True,
+                              max_length=128, return_tensors="pt")
+            enc["labels"] = enc["input_ids"].clone()
+            ds = Dataset.from_dict({k: v.tolist() for k, v in enc.items()})
+            q.put(("log", f"Dataset ready: {len(ds)} example(s)"))
+            q.put(("progress", 0.3))
+
+            out_dir = os.path.join(os.path.expanduser("~"), ".freedomforge",
+                                   "lora_adapters", adapter_name)
+            os.makedirs(out_dir, exist_ok=True)
+
+            args = TrainingArguments(
+                output_dir=out_dir,
+                num_train_epochs=3,
+                per_device_train_batch_size=1,
+                logging_steps=1,
+                save_steps=999999,
+                no_cuda=not torch.cuda.is_available(),
+                report_to="none",
+            )
+
+            total_steps = max(len(ds) * args.num_train_epochs, 1)
+
+            class _LogCb:
+                def __init__(self, q, total, running_ref):
+                    self.q = q; self.total = total; self.step = 0
+                    self.running_ref = running_ref
+                def on_log(self, a, state, control, logs=None, **kw):
+                    if logs:
+                        loss = logs.get("loss", "")
+                        lr   = logs.get("learning_rate", "")
+                        self.q.put(("log", f"  step {state.global_step}  loss={loss}  lr={lr}"))
+                        self.step = state.global_step
+                        pct = 0.3 + 0.65 * min(self.step / self.total, 1.0)
+                        self.q.put(("progress", pct))
+                    if not self.running_ref[0]:
+                        control.should_training_stop = True
+
+            running = [True]
+            def _stop_check():
+                running[0] = self._lora_running
+
+            from transformers import TrainerCallback
+            class _StopCb(TrainerCallback):
+                def on_step_end(self, a, state, control, **kw):
+                    _stop_check()
+                    if not running[0]:
+                        control.should_training_stop = True
+                    return control
+
+            log_cb  = _LogCb(q, total_steps, running)
+            stop_cb = _StopCb()
+
+            trainer_obj = Trainer(
+                model=peft_model,
+                args=args,
+                train_dataset=ds,
+                callbacks=[stop_cb],
+            )
+            # Monkey-patch log callback
+            trainer_obj.add_callback(type("LC", (), {"on_log": log_cb.on_log})())
+
+            q.put(("log", "Training started…"))
+            trainer_obj.train()
+
+            if self._lora_running:
+                peft_model.save_pretrained(out_dir)
+                q.put(("log", f"✅ Adapter saved → {out_dir}"))
+                q.put(("progress", 1.0))
+                q.put(("done", f"Done! Adapter saved to {out_dir}"))
+            else:
+                q.put(("log", "⏹ Training stopped by user."))
+                q.put(("done", "Stopped."))
+
+        except Exception as e:
+            q.put(("log", f"❌ Error: {e}"))
+            q.put(("done", f"Failed: {e}"))
+
+    def _lora_poll(self):
+        T = self.theme
+        try:
+            while True:
+                msg = self._lora_q.get_nowait()
+                if msg[0] == "log":
+                    self._lora_log_append(msg[1])
+                elif msg[0] == "progress":
+                    self._lora_bar.set(msg[1])
+                    self._lora_status.configure(
+                        text=f"{int(msg[1]*100)}%",
+                        text_color=T["text_secondary"])
+                elif msg[0] == "done":
+                    self._lora_start_btn.configure(
+                        state="normal", text="▶  Start Training")
+                    self._lora_stop_btn.configure(state="disabled")
+                    self._lora_status.configure(
+                        text=msg[1],
+                        text_color=T["green"] if "Done" in msg[1] else T.get("red","#ff4444"))
+                    return
+        except queue.Empty:
+            pass
+        if getattr(self, "_lora_running", False):
+            self.after(200, self._lora_poll)
 
     # ── Helpers ──────────────────────────────────────────────
 

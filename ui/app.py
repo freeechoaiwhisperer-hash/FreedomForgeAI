@@ -348,26 +348,6 @@ class App(ctk.CTk):
         tog_frame = ctk.CTkFrame(top, fg_color="transparent")
         tog_frame.pack(side="right", padx=8)
 
-        # Network kill switch — red when active, lives furthest right
-        self.net_var = ctk.BooleanVar(value=False)
-        self._net_sw = ctk.CTkSwitch(
-            tog_frame,
-            text="🌐 Net Kill",
-            variable=self.net_var,
-            onvalue=True, offvalue=False,
-            command=self._toggle_network,
-            width=40, height=22,
-            font=("Arial", 10, "bold"),
-            text_color=T["red"],
-            button_color=T["red"],
-            button_hover_color="#cc0000",
-        )
-        self._net_sw.pack(side="right", padx=(0, 14))
-
-        # Divider
-        ctk.CTkFrame(tog_frame, width=1, height=22,
-                     fg_color=T["divider"]).pack(side="right", padx=6)
-
         # Regular toggles
         toggles = [
             ("🖱️ Let Bot Click", "agent_var", self._toggle_agent,

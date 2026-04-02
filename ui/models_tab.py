@@ -490,6 +490,32 @@ class ModelsPanel(ctk.CTkFrame):
             command=self._rebuild,
         ).pack(side="right", padx=4)
 
+        # ── My Models card ────────────────────────────────────
+        my_card = ctk.CTkFrame(self, corner_radius=10, fg_color=T["bg_card"])
+        my_card.pack(fill="x", padx=12, pady=(10, 0))
+
+        my_hdr = ctk.CTkFrame(my_card, fg_color="transparent")
+        my_hdr.pack(fill="x", padx=14, pady=(10, 6))
+
+        ctk.CTkLabel(
+            my_hdr, text="📂  My Models",
+            font=("Arial", 14, "bold"),
+            text_color=T["text_primary"],
+        ).pack(side="left")
+
+        ctk.CTkButton(
+            my_hdr, text="🔍 Scan Computer for Models",
+            width=210, height=28, corner_radius=6,
+            fg_color=T["bg_hover"], hover_color=T["bg_card"],
+            text_color=T["text_secondary"],
+            font=("Arial", 11),
+            command=self._scan_computer,
+        ).pack(side="right")
+
+        self._my_models_frame = ctk.CTkFrame(my_card, fg_color="transparent")
+        self._my_models_frame.pack(fill="x", padx=14, pady=(0, 10))
+        self._refresh_my_models()
+
         # ── Single scrollable grouped list ───────────────────
         self._scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
         self._scroll.pack(fill="both", expand=True, padx=12, pady=(10, 0))
@@ -584,6 +610,190 @@ class ModelsPanel(ctk.CTkFrame):
                 self.after(0, lambda: self._populate_list(files))
         except Exception:
             pass
+
+    def _refresh_my_models(self):
+        """Rebuild the My Models row list from model_manager + MODELS_DIR."""
+        T = self.theme
+        for w in self._my_models_frame.winfo_children():
+            w.destroy()
+
+        try:
+            models = model_manager.get_model_list()
+        except Exception:
+            models = []
+
+        # Also include any .gguf files on disk not yet in manager
+        try:
+            on_disk = [f for f in os.listdir(MODELS_DIR) if f.endswith(".gguf")]
+            for f in on_disk:
+                if f not in models:
+                    models.append(f)
+        except Exception:
+            pass
+
+        if not models:
+            ctk.CTkLabel(
+                self._my_models_frame,
+                text="No models yet — download one below or scan your computer.",
+                font=("Arial", 11), text_color=T["text_dim"], anchor="w",
+            ).pack(anchor="w", pady=4)
+            return
+
+        for filename in models:
+            loaded = model_manager.get_current_model() == filename
+            row = ctk.CTkFrame(self._my_models_frame, fg_color=T["bg_input"],
+                               corner_radius=6)
+            row.pack(fill="x", pady=2)
+
+            ctk.CTkLabel(
+                row, text=filename,
+                font=("Arial", 12), text_color=T["text_primary"], anchor="w",
+            ).pack(side="left", padx=10, pady=6, fill="x", expand=True)
+
+            if loaded:
+                ctk.CTkLabel(row, text="▶ Active",
+                             font=("Arial", 11, "bold"),
+                             text_color=T["gold"]).pack(side="right", padx=10)
+            else:
+                ctk.CTkButton(
+                    row, text="▶ Load",
+                    width=80, height=26, corner_radius=6,
+                    fg_color=T["accent"], hover_color=T["accent_hover"],
+                    text_color="#ffffff", font=("Arial", 11),
+                    command=lambda fn=filename: self._load(fn),
+                ).pack(side="right", padx=(4, 10), pady=4)
+
+    def _scan_computer(self):
+        """Walk common directories for .gguf files and show results in a popup."""
+        T   = self.theme
+        win = ctk.CTkToplevel(self)
+        win.title("Scan for Models")
+        win.geometry("700x480")
+        win.configure(fg_color=T["bg_panel"])
+
+        def _on_close():
+            win.destroy()
+            try:
+                self.winfo_toplevel().focus_force()
+            except Exception:
+                pass
+        win.protocol("WM_DELETE_WINDOW", _on_close)
+
+        ctk.CTkLabel(
+            win, text="🔍  Scanning your computer for .gguf files…",
+            font=("Arial", 14, "bold"), text_color=T["text_primary"],
+        ).pack(pady=(18, 4), padx=20, anchor="w")
+
+        status_lbl = ctk.CTkLabel(
+            win, text="Scanning…",
+            font=("Arial", 11), text_color=T["text_secondary"],
+        )
+        status_lbl.pack(padx=20, anchor="w")
+
+        scroll = ctk.CTkScrollableFrame(win, fg_color="transparent")
+        scroll.pack(fill="both", expand=True, padx=12, pady=8)
+
+        found_paths = []
+
+        def _scan():
+            home = os.path.expanduser("~")
+            search_roots = [
+                os.path.join(home, "Downloads"),
+                os.path.join(home, "Documents"),
+                os.path.join(home, "Desktop"),
+                "/mnt",
+            ]
+            results = []
+            for root_dir in search_roots:
+                if not os.path.isdir(root_dir):
+                    continue
+                try:
+                    for dirpath, dirnames, filenames in os.walk(root_dir):
+                        # Skip hidden dirs and venvs
+                        dirnames[:] = [
+                            d for d in dirnames
+                            if not d.startswith(".") and d not in (".venv", "venv", "__pycache__")
+                        ]
+                        for fname in filenames:
+                            if fname.endswith(".gguf"):
+                                results.append(os.path.join(dirpath, fname))
+                        win.after(0, lambda p=dirpath: status_lbl.configure(
+                            text=f"Scanning: …{p[-60:]}" if len(p) > 60 else f"Scanning: {p}"))
+                except Exception:
+                    continue
+            win.after(0, lambda: _show_results(results))
+
+        def _show_results(results):
+            status_lbl.configure(
+                text=f"Found {len(results)} model file{'s' if len(results) != 1 else ''}."
+                     + ("" if results else " Nothing found in Downloads, Documents, Desktop, /mnt.")
+            )
+            found_paths.clear()
+            found_paths.extend(results)
+
+            for w in scroll.winfo_children():
+                w.destroy()
+
+            if not results:
+                ctk.CTkLabel(
+                    scroll, text="No .gguf files found.",
+                    font=("Arial", 12), text_color=T["text_dim"],
+                ).pack(pady=20)
+                return
+
+            for fpath in results:
+                fname   = os.path.basename(fpath)
+                already = os.path.exists(os.path.join(MODELS_DIR, fname))
+
+                row = ctk.CTkFrame(scroll, corner_radius=8, fg_color=T["bg_card"])
+                row.pack(fill="x", pady=3, padx=4)
+
+                info = ctk.CTkFrame(row, fg_color="transparent")
+                info.pack(side="left", fill="both", expand=True, padx=12, pady=8)
+
+                ctk.CTkLabel(info, text=fname,
+                             font=("Arial", 12, "bold"),
+                             text_color=T["text_primary"], anchor="w").pack(anchor="w")
+                ctk.CTkLabel(info, text=fpath,
+                             font=("Arial", 9), text_color=T["text_dim"],
+                             anchor="w").pack(anchor="w")
+
+                if already:
+                    ctk.CTkLabel(row, text="✅ Already added",
+                                 font=("Arial", 11), text_color=T["green"],
+                                 ).pack(side="right", padx=12, pady=8)
+                else:
+                    ctk.CTkButton(
+                        row, text="➕ Add",
+                        width=80, height=30, corner_radius=6,
+                        fg_color=T["accent"], hover_color=T["accent_hover"],
+                        text_color="#ffffff",
+                        command=lambda src=fpath, fn=fname, r=row: _add_file(src, fn, r),
+                    ).pack(side="right", padx=12, pady=8)
+
+        def _add_file(src, fname, row):
+            try:
+                os.makedirs(MODELS_DIR, exist_ok=True)
+                dest = os.path.join(MODELS_DIR, fname)
+                if not os.path.exists(dest):
+                    shutil.copy2(src, dest)
+                # Replace the Add button with a confirmation label
+                for w in row.winfo_children():
+                    try:
+                        if hasattr(w, 'cget') and w.cget('text') == "➕ Add":
+                            w.destroy()
+                    except Exception:
+                        pass
+                ctk.CTkLabel(row, text="✅ Added",
+                             font=("Arial", 11), text_color=T["green"],
+                             ).pack(side="right", padx=12, pady=8)
+                self._refresh_my_models()
+            except Exception as e:
+                ctk.CTkLabel(row, text=f"❌ {e}",
+                             font=("Arial", 10), text_color=T.get("red", "#ff4444"),
+                             ).pack(side="right", padx=12, pady=8)
+
+        threading.Thread(target=_scan, daemon=True).start()
 
     def _installed_row(self, filename):
         T      = self.theme
