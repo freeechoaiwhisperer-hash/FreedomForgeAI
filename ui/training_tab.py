@@ -35,7 +35,7 @@ class TrainingPanel(ctk.CTkFrame):
             text_color=T["text_secondary"],
         ).pack(padx=24, anchor="w", pady=(0, 16))
 
-        # Model list - now refreshes properly
+        # Force refresh model list
         models = model_manager.get_model_list()
         if not models:
             ctk.CTkLabel(
@@ -49,7 +49,7 @@ class TrainingPanel(ctk.CTkFrame):
 
         ctk.CTkLabel(
             self,
-            text="Available models for training:",
+            text=f"Available models ({len(models)}):",
             font=("Arial", 14, "bold"),
             text_color=T["text_primary"],
         ).pack(pady=(0, 8), padx=24, anchor="w")
@@ -79,13 +79,13 @@ class TrainingPanel(ctk.CTkFrame):
 
         ctk.CTkLabel(
             self,
-            text="Note: Training features coming soon.\nThis tab will support LoRA fine-tuning on your models.",
+            text="Note: Full training (LoRA fine-tuning) coming soon.\nThis tab will support your downloaded models.",
             font=("Arial", 11),
             text_color=T["text_dim"],
             justify="center",
         ).pack(pady=30, padx=24)
 
     def _start_training(self, model_name: str):
-        # Placeholder - will be expanded later
-        print(f"Starting training on {model_name} (placeholder)")
-        # In final version this would launch the trainer with the model
+        # Placeholder for now
+        print(f"[Training] Starting training on {model_name}")
+        # In final version this would launch the trainer
