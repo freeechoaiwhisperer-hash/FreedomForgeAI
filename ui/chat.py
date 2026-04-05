@@ -170,8 +170,11 @@ class ChatPanel(ctk.CTkFrame):
         )
         self.mic_btn.pack(fill="x")
 
-        # Welcome
-        self.sys_message(t("chat_welcome"))
+        # Welcome — show first-time guidance only when no model is available yet
+        if model_manager.get_model_list():
+            self.sys_message(t("chat_welcome_ready"))
+        else:
+            self.sys_message(t("chat_welcome"))
 
     # ── Helpers ──────────────────────────────────────────────
 
