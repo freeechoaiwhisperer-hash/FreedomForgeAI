@@ -18,7 +18,9 @@ BLOCKED_COMMANDS = [
     ":(){:|:&};:",
     "chmod -R 777 /",
     "wget http",
+    "wget https",
     "curl http",
+    "curl https",
 ]
 
 _agent_enabled = False

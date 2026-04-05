@@ -315,11 +315,12 @@ class ChatPanel(ctk.CTkFrame):
 
         def on_complete():
             reply = "".join(full_reply)
+            stamped = stamp_response(reply) if should_stamp(reply) else reply
             self._history.append(
-                {"role": "assistant", "content": reply})
+                {"role": "assistant", "content": stamped})
             self.after(0, self._stream_done)
-            if config.get("voice_out") and reply:
-                tts.speak(reply)
+            if config.get("voice_out") and stamped:
+                tts.speak(stamped)
 
         def on_error(err: str):
             self.after(0, lambda: self._stream_error(err))
@@ -354,6 +355,8 @@ class ChatPanel(ctk.CTkFrame):
     # ── Module routing ───────────────────────────────────────
 
     def _handle_module(self, module_name: str, message: str):
+        self._streaming = True
+        self.send_btn.configure(state="disabled")
         self.set_status("thinking")
         self.sys_message(
             t("module_routing", module=module_name))
@@ -363,12 +366,16 @@ class ChatPanel(ctk.CTkFrame):
                 self._append(f"\n{t('chat_ai')}:  ", "name_ai"),
                 self._append(f"{result}\n\n", "ai"),
                 self.set_status("idle"),
+                self.send_btn.configure(state="normal"),
+                setattr(self, "_streaming", False),
             ))
 
         def on_error(err: str):
             self.after(0, lambda: (
                 self.error_message(err),
                 self.set_status("idle"),
+                self.send_btn.configure(state="normal"),
+                setattr(self, "_streaming", False),
             ))
 
         modules.handle(module_name, message, on_result, on_error)

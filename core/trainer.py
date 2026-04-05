@@ -228,6 +228,7 @@ def _log_practice(model, skill, prompt, answer, score):
         "time":   time.strftime("%Y-%m-%d %H:%M:%S"),
         "skill":  skill,
         "prompt": prompt[:100],
+        "answer": answer[:500],
         "score":  score,
     })
 

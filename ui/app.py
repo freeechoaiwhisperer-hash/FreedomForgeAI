@@ -375,7 +375,12 @@ class App(ctk.CTk):
 
     def _build_pulse(self, parent):
         T = self._theme
-        import psutil
+        try:
+            import psutil
+            _psutil_ok = True
+        except ImportError:
+            psutil = None
+            _psutil_ok = False
         from core.hardware import get_gpu_percent
 
         frame = ctk.CTkFrame(parent, fg_color="transparent")
@@ -416,9 +421,10 @@ class App(ctk.CTk):
             if not self._alive:
                 return
             try:
-                cpu = psutil.cpu_percent(interval=None)
-                cpu_lbl.configure(text=f"CPU: {cpu:.0f}%")
-                cpu_bar.set(cpu / 100)
+                if _psutil_ok:
+                    cpu = psutil.cpu_percent(interval=None)
+                    cpu_lbl.configure(text=f"CPU: {cpu:.0f}%")
+                    cpu_bar.set(cpu / 100)
                 gpu = get_gpu_percent()
                 gpu_lbl.configure(text=f"GPU: {gpu:.0f}%")
                 gpu_bar.set(gpu / 100)

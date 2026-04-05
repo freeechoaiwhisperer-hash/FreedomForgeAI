@@ -18,6 +18,7 @@ IS_MAC   = SYSTEM == 'darwin'
 IS_WIN   = SYSTEM == 'windows'
 
 _firewall_backup = {}
+_nm_kill_active  = False
 
 
 def _run(cmd):
@@ -142,6 +143,7 @@ def get_bandwidth(callback=None):
 
 def kill_network(on_done=None):
     def _kill():
+        global _nm_kill_active
         try:
             if IS_LINUX:
                 import tempfile
@@ -156,18 +158,28 @@ def kill_network(on_done=None):
                 subprocess.run(['iptables', '-P', 'FORWARD', 'DROP'], check=True)
             elif IS_MAC:
                 import tempfile
-                fd, path = tempfile.mkstemp(suffix='.pf')
+                # Save the current pf ruleset before overwriting it
+                fd, backup_path = tempfile.mkstemp(suffix='.pf.bak')
                 os.close(fd)
-                with open(path, 'w') as f:
+                r = subprocess.run(['pfctl', '-s', 'rules'],
+                                   capture_output=True, text=True, timeout=10)
+                with open(backup_path, 'w') as f:
+                    f.write(r.stdout if r.returncode == 0 else "")
+                _firewall_backup['mac'] = backup_path
+
+                fd2, block_path = tempfile.mkstemp(suffix='.pf')
+                os.close(fd2)
+                with open(block_path, 'w') as f:
                     f.write("block all\n")
                 subprocess.run(['pfctl', '-E'],    capture_output=True)
-                subprocess.run(['pfctl', '-f', path], check=True)
-                os.unlink(path)
+                subprocess.run(['pfctl', '-f', block_path], check=True)
+                os.unlink(block_path)
             elif IS_WIN:
                 subprocess.run(
                     ['netsh', 'advfirewall', 'set', 'allprofiles',
                      'firewallpolicy', 'blockinbound,blockoutbound'],
                     check=True)
+            _nm_kill_active = True
             if on_done:
                 on_done(True, "All network traffic blocked.")
         except Exception as e:
@@ -178,6 +190,7 @@ def kill_network(on_done=None):
 
 def restore_network(on_done=None):
     def _restore():
+        global _nm_kill_active
         try:
             if IS_LINUX:
                 backup = _firewall_backup.get('linux')
@@ -190,18 +203,42 @@ def restore_network(on_done=None):
                     for chain in ['INPUT', 'OUTPUT', 'FORWARD']:
                         subprocess.run(['iptables', '-P', chain, 'ACCEPT'])
             elif IS_MAC:
-                subprocess.run(['pfctl', '-d'], capture_output=True)
+                backup = _firewall_backup.get('mac')
+                if backup and os.path.exists(backup):
+                    with open(backup, 'r') as f:
+                        rules = f.read().strip()
+                    if rules:
+                        import tempfile
+                        fd, restore_path = tempfile.mkstemp(suffix='.pf')
+                        os.close(fd)
+                        with open(restore_path, 'w') as f:
+                            f.write(rules)
+                        subprocess.run(['pfctl', '-f', restore_path],
+                                       capture_output=True)
+                        os.unlink(restore_path)
+                    else:
+                        # No prior rules — just disable pf
+                        subprocess.run(['pfctl', '-d'], capture_output=True)
+                    os.unlink(backup)
+                    _firewall_backup.pop('mac', None)
+                else:
+                    subprocess.run(['pfctl', '-d'], capture_output=True)
             elif IS_WIN:
                 subprocess.run(
                     ['netsh', 'advfirewall', 'set', 'allprofiles',
                      'firewallpolicy', 'allowinbound,allowoutbound'],
                     check=True)
+            _nm_kill_active = False
             if on_done:
                 on_done(True, "Network access restored.")
         except Exception as e:
             if on_done:
                 on_done(False, str(e))
     threading.Thread(target=_restore, daemon=True).start()
+
+
+def is_kill_active() -> bool:
+    return _nm_kill_active
 
 
 # ── VPN ──────────────────────────────────────────────────────

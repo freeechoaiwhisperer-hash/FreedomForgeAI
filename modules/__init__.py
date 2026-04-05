@@ -15,13 +15,6 @@ _TRIGGERS = {
         r"\bvideo\s+of\b",
         r"^/video\b",
     ],
-    "image": [
-        r"\bmake\s+(a[n]?\s+)?image\b",
-        r"\bgenerate\s+(a[n]?\s+)?image\b",
-        r"\bdraw\b",
-        r"\bpaint\b",
-        r"^/image\b",
-    ],
     "agent": [
         r"^/run\b",
         r"^/exec\b",
