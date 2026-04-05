@@ -11,70 +11,46 @@
 #  authorized testing. Bad actors leave their own evidence.
 # ============================================================
 
-import hashlib
 import datetime
 import secrets
-import os
 from typing import Optional
 
 # Session ID — unique per app launch, never stored permanently
 _SESSION_ID = secrets.token_hex(8)
-_LAUNCH_TIME = datetime.datetime.utcnow().isoformat()
+
+_REPO_URL = "https://github.com/freeechoaiwhisperer-hash/FreedomForgeAI"
+
+
+def _build_stamp_lines(c: str, ts: str) -> list:
+    """Return the stamp lines using the given comment prefix and timestamp."""
+    return [
+        f"{c} === FreedomForge AI Generated Code ===",
+        f"{c} Generated: {ts}",
+        f"{c} Session: {_SESSION_ID}",
+        f"{c} Tool: FreedomForge AI",
+        f"{c} {_REPO_URL}",
+        f"{c} === End of Stamp ===",
+    ]
 
 
 def _get_stamp_comment(language: str = "python") -> str:
     """
-    Generate a silent metadata comment for the given language.
-    Looks like a normal auto-generated comment.
+    Generate a metadata comment block for the given language.
     """
-    ts       = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    sig      = hashlib.sha256(
-        f"{_SESSION_ID}{ts}".encode()
-    ).hexdigest()[:16]
+    ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    stamps = {
-        "python": (
-            f"# Generated: {ts} | "
-            f"Ref: {sig} | "
-            f"FFA-v1"
-        ),
-        "javascript": (
-            f"// Generated: {ts} | "
-            f"Ref: {sig} | "
-            f"FFA-v1"
-        ),
-        "bash": (
-            f"# Generated: {ts} | "
-            f"Ref: {sig} | "
-            f"FFA-v1"
-        ),
-        "powershell": (
-            f"# Generated: {ts} | "
-            f"Ref: {sig} | "
-            f"FFA-v1"
-        ),
-        "c": (
-            f"/* Generated: {ts} | "
-            f"Ref: {sig} | "
-            f"FFA-v1 */"
-        ),
-        "cpp": (
-            f"// Generated: {ts} | "
-            f"Ref: {sig} | "
-            f"FFA-v1"
-        ),
-        "rust": (
-            f"// Generated: {ts} | "
-            f"Ref: {sig} | "
-            f"FFA-v1"
-        ),
-        "go": (
-            f"// Generated: {ts} | "
-            f"Ref: {sig} | "
-            f"FFA-v1"
-        ),
-    }
-    return stamps.get(language, stamps["python"])
+    if language in ("javascript", "typescript", "cpp", "rust", "go"):
+        c = "//"
+    elif language == "c":
+        # Use block-comment style for C: /* ... * ... */
+        inner = _build_stamp_lines(" *", ts)
+        inner[0] = inner[0].replace(" *", "/*", 1)   # opening line
+        inner[-1] = inner[-1] + " */"                 # closing line
+        return "\n".join(inner)
+    else:  # python, bash, powershell, shell, default
+        c = "#"
+
+    return "\n".join(_build_stamp_lines(c, ts))
 
 
 def _detect_language(code: str) -> str:
@@ -163,7 +139,3 @@ def stamp_response(response: str) -> str:
 
 def get_session_id() -> str:
     return _SESSION_ID
-
-
-def get_launch_time() -> str:
-    return _LAUNCH_TIME
