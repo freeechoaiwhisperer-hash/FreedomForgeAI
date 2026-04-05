@@ -56,30 +56,6 @@ BY ENABLING AGENT MODE YOU ACKNOWLEDGE:
 • Use Agent Mode only when you need it and disable it when you don't
 
 
-METADATA STAMPING — PLEASE READ
-─────────────────────────────────
-When the AI generates executable code (Python, Bash, JavaScript, etc.)
-a silent metadata stamp is automatically embedded in the code as a
-comment. This stamp contains:
-• A timestamp of when the code was generated
-• An anonymous session reference hash
-• A FreedomForge AI attribution marker
-
-WHY WE DO THIS:
-This protects legitimate users. If you are doing authorized security
-testing (red teaming, penetration testing) this stamp is your proof
-of authorization timeline. If someone attempts to misuse AI-generated
-code for unauthorized access to systems, this stamp creates an
-evidence trail.
-
-This is disclosed here so you are fully informed. The stamp does not
-contain your name, IP address, or any personally identifiable
-information. It is an anonymous session reference only.
-
-If you are a legitimate security researcher: this stamp helps you,
-not hurts you. Keep it in your code — it documents your work.
-
-
 ACCEPTABLE USE
 ──────────────
 You MAY:
@@ -109,7 +85,6 @@ including the United States (Computer Fraud and Abuse Act), United Kingdom
 Information Systems).
 
 The developer accepts no liability for illegal use of this software.
-All AI-generated code includes metadata stamps that create an audit trail.
 You have been informed. Choose wisely.
 
 
@@ -188,10 +163,7 @@ class TermsDialog(ctk.CTkToplevel):
         self.geometry("780x620")
         self.resizable(True, True)
         self.configure(fg_color=T["bg_panel"])
-        # Don't set transient — parent may be withdrawn on first launch,
-        # causing some WMs to auto-close this dialog.
-        self.lift()
-        self.focus_force()
+        self.grab_set()
         self.protocol("WM_DELETE_WINDOW", on_decline)
 
         # Header
@@ -262,7 +234,6 @@ class TermsDialog(ctk.CTkToplevel):
         ).pack(side="right", padx=8)
 
     def _on_checkbox(self):
-        T = self.theme if hasattr(self, "theme") else {}
         if self._agree_var.get():
             self._accept_btn.configure(
                 state="normal",
