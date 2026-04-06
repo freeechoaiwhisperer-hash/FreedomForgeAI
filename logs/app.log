@@ -31,3 +31,4 @@
 2026-04-01 15:20:43  INFO      Encryption initialised (key fingerprint: a6742977f79da728)
 2026-04-01 15:20:52  INFO      Encryption initialised (key fingerprint: a6742977f79da728)
 2026-04-01 15:30:05  INFO      Encryption initialised (key fingerprint: a6742977f79da728)
+2026-04-06 10:27:21  ERROR     Unknown provider 'unknown_provider'. Supported providers: openai, anthropic, gemini, groq, openrouter.

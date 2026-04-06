@@ -9,6 +9,7 @@ from . import (
     hardware,
     metadata_stamp,
     model_manager,
+    api_bridge,
     network_monitor,
     privacy,
     plugin_loader,
