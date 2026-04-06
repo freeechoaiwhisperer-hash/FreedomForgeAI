@@ -10,7 +10,7 @@ import platform
 import subprocess
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from core import logger
 
 try:
@@ -406,11 +406,12 @@ _BASE_MODEL_PATHS = [
 
 
 def _model_source_app(path_str: str) -> str:
-    if ".ollama" in path_str:
+    parts = set(Path(path_str).parts)
+    if ".ollama" in parts:
         return "Ollama"
-    if "lm-studio" in path_str:
+    if "lm-studio" in parts:
         return "LM Studio"
-    if "huggingface" in path_str:
+    if "huggingface" in parts:
         return "HuggingFace"
     return "Found"
 
@@ -434,7 +435,7 @@ def scan_for_models() -> List[Dict]:
                 pass
 
     results: List[Dict] = []
-    seen: set = set()
+    seen: Set[str] = set()
 
     for root in search_roots:
         if not root.exists():
