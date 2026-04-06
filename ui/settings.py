@@ -5,6 +5,7 @@
 
 import os
 import threading
+import urllib.parse
 import customtkinter as ctk
 from core import config
 from assets.i18n import t, language_options, display_name_to_code, get_language
@@ -195,6 +196,9 @@ class SettingsPanel(ctk.CTkFrame):
 
         # ── LoRA Adapter ──────────────────────────────────────
         self._build_adapter_section(card4)
+
+        # ── API Connections ───────────────────────────────────
+        self._build_api_connections(scroll)
 
         # ── Special Features ──────────────────────────────────
         self._section(scroll, t("settings_special"))
@@ -585,3 +589,390 @@ class SettingsPanel(ctk.CTkFrame):
             for w in self.winfo_children():
                 w.destroy()
             self._build()
+
+    # ── API Connections ──────────────────────────────────────
+
+    _MSG_CLEAR_MS = 2500   # ms before inline feedback labels clear themselves
+
+    _API_PROVIDERS = [
+        {
+            "id":       "openai",
+            "name":     "🤖  OpenAI  (ChatGPT)",
+            "test_url": "https://api.openai.com/v1/models",
+            "auth":     "bearer",
+        },
+        {
+            "id":       "anthropic",
+            "name":     "🧠  Anthropic  (Claude)",
+            "test_url": "https://api.anthropic.com/v1/models",
+            "auth":     "x-api-key",
+        },
+        {
+            "id":       "google",
+            "name":     "✨  Google  (Gemini)",
+            "test_url": "https://generativelanguage.googleapis.com/v1/models?key={key}",
+            "auth":     "query",
+        },
+        {
+            "id":       "groq",
+            "name":     "⚡  Groq  (fast free tier)",
+            "test_url": "https://api.groq.com/openai/v1/models",
+            "auth":     "bearer",
+        },
+        {
+            "id":       "openrouter",
+            "name":     "🔀  OpenRouter  (100+ models)",
+            "test_url": "https://openrouter.ai/api/v1/models",
+            "auth":     "bearer",
+        },
+    ]
+
+    def _build_api_connections(self, scroll):
+        T = self.theme
+        self._section(scroll, "🔑  API Connections")
+        card = self._card(scroll)
+
+        ctk.CTkLabel(
+            card,
+            text="  🔒  Keys are encrypted and stored locally — never sent anywhere except the provider you test.",
+            font=("Arial", 11),
+            text_color=T["text_secondary"],
+        ).pack(anchor="w", padx=16, pady=(10, 6))
+
+        for provider in self._API_PROVIDERS:
+            self._build_provider_row(card, provider)
+
+        ctk.CTkFrame(card, height=1, fg_color=T.get("divider", "#222")).pack(
+            fill="x", padx=16, pady=(8, 4))
+
+        self._build_custom_endpoint_row(card)
+
+    def _build_provider_row(self, card, provider: dict):
+        T   = self.theme
+        pid = provider["id"]
+
+        existing_key = self._load_api_key(pid)
+        has_key      = bool(existing_key)
+
+        row = ctk.CTkFrame(card, fg_color="transparent")
+        row.pack(fill="x", padx=16, pady=6)
+
+        # Left: status dot + provider name
+        left = ctk.CTkFrame(row, fg_color="transparent")
+        left.pack(side="left", fill="both", expand=True)
+
+        dot = ctk.CTkLabel(
+            left, text="●",
+            font=("Arial", 14),
+            text_color=T["green"] if has_key else T["text_dim"],
+            width=20,
+        )
+        dot.pack(side="left", padx=(0, 6))
+
+        ctk.CTkLabel(
+            left, text=provider["name"],
+            font=("Arial", 13),
+            text_color=T["text_primary"],
+        ).pack(side="left")
+
+        # Right: entry + Save + Test + result label (left-to-right)
+        right = ctk.CTkFrame(row, fg_color="transparent")
+        right.pack(side="right")
+
+        entry = ctk.CTkEntry(
+            right,
+            placeholder_text="API key…",
+            width=210,
+            show="•",
+            fg_color=T["bg_hover"],
+            border_color=T.get("border", "#222"),
+            text_color=T["text_primary"],
+        )
+        if existing_key:
+            entry.insert(0, existing_key)
+        entry.pack(side="left", padx=(0, 6))
+
+        result_lbl = ctk.CTkLabel(
+            right, text="",
+            font=("Arial", 11),
+            text_color=T["text_secondary"],
+            width=130,
+            anchor="w",
+        )
+
+        ctk.CTkButton(
+            right,
+            text="Save",
+            width=56, height=30,
+            fg_color=T["bg_hover"],
+            hover_color=T["accent"],
+            text_color=T["text_secondary"],
+            command=lambda p=pid, e=entry, d=dot, r=result_lbl:
+                self._save_api_key(p, e, d, r),
+        ).pack(side="left", padx=(0, 4))
+
+        ctk.CTkButton(
+            right,
+            text="Test",
+            width=56, height=30,
+            fg_color=T["bg_hover"],
+            hover_color=T["accent"],
+            text_color=T["text_secondary"],
+            command=lambda prov=provider, e=entry, d=dot, r=result_lbl:
+                self._test_api_key(prov, e, d, r),
+        ).pack(side="left", padx=(0, 6))
+
+        result_lbl.pack(side="left")
+
+    def _build_custom_endpoint_row(self, card):
+        T = self.theme
+
+        existing_key = self._load_api_key("custom")
+        saved_url    = config.get("api_custom_url", "")
+        has_config   = bool(existing_key or saved_url)
+
+        # Header row
+        hdr = ctk.CTkFrame(card, fg_color="transparent")
+        hdr.pack(fill="x", padx=16, pady=(6, 2))
+
+        dot = ctk.CTkLabel(
+            hdr, text="●",
+            font=("Arial", 14),
+            text_color=T["green"] if has_config else T["text_dim"],
+            width=20,
+        )
+        dot.pack(side="left", padx=(0, 6))
+
+        ctk.CTkLabel(
+            hdr,
+            text="🖧  Custom Endpoint  (LM Studio, self-hosted…)",
+            font=("Arial", 13),
+            text_color=T["text_primary"],
+        ).pack(side="left")
+
+        result_lbl = ctk.CTkLabel(
+            hdr, text="",
+            font=("Arial", 11),
+            text_color=T["text_secondary"],
+            anchor="w",
+        )
+        result_lbl.pack(side="left", padx=(12, 0))
+
+        # URL field row
+        url_row = ctk.CTkFrame(card, fg_color="transparent")
+        url_row.pack(fill="x", padx=42, pady=(2, 2))
+
+        ctk.CTkLabel(
+            url_row, text="URL",
+            font=("Arial", 12),
+            text_color=T["text_secondary"],
+            width=36,
+            anchor="w",
+        ).pack(side="left", padx=(0, 6))
+
+        url_entry = ctk.CTkEntry(
+            url_row,
+            placeholder_text="http://localhost:1234/v1/models",
+            width=340,
+            fg_color=T["bg_hover"],
+            border_color=T.get("border", "#222"),
+            text_color=T["text_primary"],
+        )
+        if saved_url:
+            url_entry.insert(0, saved_url)
+        url_entry.pack(side="left")
+
+        # Key + buttons row
+        key_row = ctk.CTkFrame(card, fg_color="transparent")
+        key_row.pack(fill="x", padx=42, pady=(0, 10))
+
+        ctk.CTkLabel(
+            key_row, text="Key",
+            font=("Arial", 12),
+            text_color=T["text_secondary"],
+            width=36,
+            anchor="w",
+        ).pack(side="left", padx=(0, 6))
+
+        key_entry = ctk.CTkEntry(
+            key_row,
+            placeholder_text="API key (optional)",
+            width=210,
+            show="•",
+            fg_color=T["bg_hover"],
+            border_color=T.get("border", "#222"),
+            text_color=T["text_primary"],
+        )
+        if existing_key:
+            key_entry.insert(0, existing_key)
+        key_entry.pack(side="left", padx=(0, 6))
+
+        ctk.CTkButton(
+            key_row,
+            text="Save",
+            width=56, height=30,
+            fg_color=T["bg_hover"],
+            hover_color=T["accent"],
+            text_color=T["text_secondary"],
+            command=lambda u=url_entry, k=key_entry, d=dot, r=result_lbl:
+                self._save_custom_endpoint(u, k, d, r),
+        ).pack(side="left", padx=(0, 4))
+
+        ctk.CTkButton(
+            key_row,
+            text="Test",
+            width=56, height=30,
+            fg_color=T["bg_hover"],
+            hover_color=T["accent"],
+            text_color=T["text_secondary"],
+            command=lambda u=url_entry, k=key_entry, d=dot, r=result_lbl:
+                self._test_custom_endpoint(u, k, d, r),
+        ).pack(side="left")
+
+    # ── API key persistence ───────────────────────────────────
+
+    def _load_api_key(self, provider_id: str) -> str:
+        """Return the decrypted API key for *provider_id*, or '' if not set."""
+        encrypted = config.get(f"api_key_{provider_id}", "")
+        if not encrypted:
+            return ""
+        from core import encryption
+        return encryption.decrypt(encrypted) or ""
+
+    def _save_api_key(self, provider_id: str, entry, dot, result_lbl):
+        T   = self.theme
+        key = entry.get().strip()
+        if not key:
+            config.set(f"api_key_{provider_id}", "")
+            dot.configure(text_color=T["text_dim"])
+            result_lbl.configure(
+                text="Cleared.", text_color=T["text_secondary"])
+            self.after(self._MSG_CLEAR_MS, lambda: result_lbl.configure(text=""))
+            return
+
+        from core import encryption
+        encrypted = encryption.encrypt(key)
+        if encrypted:
+            config.set(f"api_key_{provider_id}", encrypted)
+            dot.configure(text_color=T["green"])
+            result_lbl.configure(text="✅ Saved.", text_color=T["green"])
+        else:
+            result_lbl.configure(
+                text="⚠ Encryption not ready.",
+                text_color=T.get("yellow", "#ffcc00"))
+        self.after(self._MSG_CLEAR_MS, lambda: result_lbl.configure(text=""))
+
+    def _save_custom_endpoint(self, url_entry, key_entry, dot, result_lbl):
+        T   = self.theme
+        url = url_entry.get().strip()
+        key = key_entry.get().strip()
+
+        config.set("api_custom_url", url)
+
+        if key:
+            from core import encryption
+            encrypted = encryption.encrypt(key)
+            if not encrypted:
+                result_lbl.configure(
+                    text="⚠ Encryption not ready.",
+                    text_color=T.get("yellow", "#ffcc00"))
+                self.after(self._MSG_CLEAR_MS, lambda: result_lbl.configure(text=""))
+                return
+            config.set("api_key_custom", encrypted)
+        else:
+            config.set("api_key_custom", "")
+
+        dot.configure(
+            text_color=T["green"] if (url or key) else T["text_dim"])
+        result_lbl.configure(text="✅ Saved.", text_color=T["green"])
+        self.after(self._MSG_CLEAR_MS, lambda: result_lbl.configure(text=""))
+
+    # ── API test ─────────────────────────────────────────────
+
+    def _test_api_key(self, provider: dict, entry, dot, result_lbl):
+        T   = self.theme
+        key = entry.get().strip()
+        if not key:
+            result_lbl.configure(
+                text="Enter a key first.",
+                text_color=T.get("yellow", "#ffcc00"))
+            self.after(self._MSG_CLEAR_MS, lambda: result_lbl.configure(text=""))
+            return
+
+        result_lbl.configure(text="Testing…", text_color=T["text_secondary"])
+
+        def _run():
+            ok, msg = self._do_api_test(provider, key)
+            color   = T["green"] if ok else T["red"]
+            self.after(0, lambda: result_lbl.configure(
+                text=msg, text_color=color))
+            if ok:
+                self.after(0, lambda: dot.configure(
+                    text_color=T["green"]))
+
+        threading.Thread(target=_run, daemon=True).start()
+
+    def _test_custom_endpoint(self, url_entry, key_entry, dot, result_lbl):
+        T   = self.theme
+        url = url_entry.get().strip()
+        key = key_entry.get().strip()
+        if not url:
+            result_lbl.configure(
+                text="Enter a URL first.",
+                text_color=T.get("yellow", "#ffcc00"))
+            self.after(self._MSG_CLEAR_MS, lambda: result_lbl.configure(text=""))
+            return
+
+        result_lbl.configure(text="Testing…", text_color=T["text_secondary"])
+        provider = {"id": "custom", "test_url": url, "auth": "bearer"}
+
+        def _run():
+            ok, msg = self._do_api_test(provider, key)
+            color   = T["green"] if ok else T["red"]
+            self.after(0, lambda: result_lbl.configure(
+                text=msg, text_color=color))
+            if ok:
+                self.after(0, lambda: dot.configure(
+                    text_color=T["green"]))
+
+        threading.Thread(target=_run, daemon=True).start()
+
+    @staticmethod
+    def _do_api_test(provider: dict, key: str) -> tuple:
+        """Make a quick GET request to verify the API key.
+
+        Returns (success: bool, message: str).
+        """
+        import requests as _req
+
+        auth     = provider.get("auth", "bearer")
+        test_url = provider["test_url"]
+        headers  = {"User-Agent": "FreedomForgeAI/1.0"}
+
+        if auth == "bearer":
+            headers["Authorization"] = f"Bearer {key}"
+        elif auth == "x-api-key":
+            headers["x-api-key"]            = key
+            headers["anthropic-version"]    = "2023-06-01"
+        elif auth == "query":
+            test_url = test_url.replace("{key}", urllib.parse.quote(key, safe=""))
+        else:
+            headers["Authorization"] = f"Bearer {key}"
+
+        try:
+            resp = _req.get(test_url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                return True, "✅ Connected"
+            if resp.status_code == 401:
+                return False, "❌ Invalid API key"
+            if resp.status_code == 403:
+                return False, "❌ Access denied — check key permissions"
+            if resp.status_code == 429:
+                return False, "⚠ Rate-limited — key may be valid, try later"
+            return False, f"❌ HTTP {resp.status_code}"
+        except _req.exceptions.ConnectionError:
+            return False, "❌ Cannot connect — check your network"
+        except _req.exceptions.Timeout:
+            return False, "❌ Connection timed out"
+        except Exception as exc:
+            return False, f"❌ {exc}"
