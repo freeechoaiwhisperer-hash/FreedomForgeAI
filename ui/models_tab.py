@@ -1971,8 +1971,7 @@ class ModelsPanel(ctk.CTkFrame):
                 self._hf_loading = False
 
         threading.Thread(target=_search, daemon=True).start()
-        threading.Thread(
-            target=self._github_search, args=(query,), daemon=True).start()
+        threading.Thread(target=self._github_search, args=(query,), daemon=True).start()
 
     def _github_search(self, query: str):
         T = self.theme
@@ -1993,7 +1992,7 @@ class ModelsPanel(ctk.CTkFrame):
             r.raise_for_status()
             items = r.json().get("items", [])
             self.after(0, lambda: self._render_github_results(items, query))
-        except Exception:
+        except requests.RequestException:
             pass  # silently skip GitHub results if unavailable
 
     def _render_github_results(self, items, query: str, rate_limited: bool = False):
@@ -2021,11 +2020,11 @@ class ModelsPanel(ctk.CTkFrame):
             self._github_result_row(item)
 
     def _github_result_row(self, item: dict):
-        T    = self.theme
+        T = self.theme
         name = item.get("full_name", item.get("name", "Unknown"))
         desc = item.get("description") or ""
         stars = item.get("stargazers_count", 0)
-        html_url  = item.get("html_url", "")
+        html_url = item.get("html_url", "")
         clone_url = item.get("clone_url", "")
 
         row = ctk.CTkFrame(self._scroll, corner_radius=10, fg_color=T["bg_card"])
