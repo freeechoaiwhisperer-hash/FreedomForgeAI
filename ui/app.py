@@ -27,6 +27,7 @@ from ui.terms_tab   import TermsPanel, TermsDialog
 from ui.system_tab  import SystemPanel
 from ui.training_tab import TrainingPanel
 from ui.video_tab   import VideoPanel
+from ui.agents_tab  import AgentsPanel
 from core.trainer    import start_idle_trainer, ping_activity
 
 from utils.paths import APP_VERSION
@@ -273,6 +274,7 @@ class App(ctk.CTk):
             ("🖥️", "System",          "System"),
             ("🎓", "Training",        "Training"),
             ("🎬", "Video",           "Video"),
+            ("🤖", "Agents",          "Agents"),
             ("⚙️", t("nav_settings"), "Settings"),
             ("📋", "Terms",           "Terms"),
             ("🪄", t("nav_about"),    "About"),
@@ -322,6 +324,7 @@ class App(ctk.CTk):
         self.system_panel    = SystemPanel(self.content_frame, self, T)
         self.training_panel  = TrainingPanel(self.content_frame, self, T)
         self.video_panel    = VideoPanel(self.content_frame, self, T)
+        self.agents_panel   = AgentsPanel(self.content_frame, self, T)
         self.settings_panel = SettingsPanel(self.content_frame, self, T)
         self.terms_panel    = TermsPanel(self.content_frame, T)
         self.about_panel    = AboutPanel(self.content_frame, T)
@@ -332,6 +335,7 @@ class App(ctk.CTk):
         self.panels["System"]    = self.system_panel
         self.panels["Training"]  = self.training_panel
         self.panels["Video"]    = self.video_panel
+        self.panels["Agents"]   = self.agents_panel
         self.panels["Settings"] = self.settings_panel
         self.panels["Terms"]    = self.terms_panel
         self.panels["About"]    = self.about_panel
@@ -466,6 +470,7 @@ class App(ctk.CTk):
         self.system_panel    = SystemPanel(self.content_frame, self, T)
         self.training_panel  = TrainingPanel(self.content_frame, self, T)
         self.video_panel    = VideoPanel(self.content_frame, self, T)
+        self.agents_panel   = AgentsPanel(self.content_frame, self, T)
         self.settings_panel = SettingsPanel(self.content_frame, self, T)
         self.terms_panel    = TermsPanel(self.content_frame, T)
         self.about_panel    = AboutPanel(self.content_frame, T)
@@ -476,6 +481,7 @@ class App(ctk.CTk):
         self.panels["System"]    = self.system_panel
         self.panels["Training"]  = self.training_panel
         self.panels["Video"]    = self.video_panel
+        self.panels["Agents"]   = self.agents_panel
         self.panels["Settings"] = self.settings_panel
         self.panels["Terms"]    = self.terms_panel
         self.panels["About"]    = self.about_panel
