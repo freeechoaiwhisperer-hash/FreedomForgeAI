@@ -7,6 +7,7 @@ import os
 import queue
 import shutil
 import threading
+import webbrowser
 from tkinter import filedialog
 
 import customtkinter as ctk
@@ -1922,7 +1923,7 @@ class ModelsPanel(ctk.CTkFrame):
                 command=lambda mo=m: self._download(mo),
             ).pack(fill="x")
 
-    # ── Search (find more via HuggingFace) ───────────────────
+    # ── Search (HuggingFace + GitHub) ────────────────────────
 
     def _do_search(self):
         query = self._search_var.get().strip()
@@ -1970,6 +1971,108 @@ class ModelsPanel(ctk.CTkFrame):
                 self._hf_loading = False
 
         threading.Thread(target=_search, daemon=True).start()
+        threading.Thread(
+            target=self._github_search, args=(query,), daemon=True).start()
+
+    def _github_search(self, query: str):
+        T = self.theme
+        try:
+            url = (
+                f"https://api.github.com/search/repositories"
+                f"?q={query}+gguf&sort=stars&per_page=20"
+            )
+            r = requests.get(
+                url,
+                headers={"Accept": "application/vnd.github.v3+json"},
+                timeout=12,
+            )
+            if r.status_code in (403, 429):
+                self.after(0, lambda: self._render_github_results(
+                    None, query, rate_limited=True))
+                return
+            r.raise_for_status()
+            items = r.json().get("items", [])
+            self.after(0, lambda: self._render_github_results(items, query))
+        except Exception:
+            pass  # silently skip GitHub results if unavailable
+
+    def _render_github_results(self, items, query: str, rate_limited: bool = False):
+        T = self.theme
+        if rate_limited:
+            ctk.CTkLabel(
+                self._scroll,
+                text="⚠️  GitHub search limit reached — try again in 60 seconds",
+                font=("Arial", 12),
+                text_color=T.get("text_error", "#ff9944"),
+            ).pack(anchor="w", padx=10, pady=(8, 4))
+            return
+
+        if not items:
+            return
+
+        ctk.CTkLabel(
+            self._scroll,
+            text=f"[GitHub]  {len(items)} repositories found",
+            font=("Arial", 12, "bold"),
+            text_color=T["text_secondary"],
+        ).pack(anchor="w", padx=10, pady=(12, 4))
+
+        for item in items:
+            self._github_result_row(item)
+
+    def _github_result_row(self, item: dict):
+        T    = self.theme
+        name = item.get("full_name", item.get("name", "Unknown"))
+        desc = item.get("description") or ""
+        stars = item.get("stargazers_count", 0)
+        html_url  = item.get("html_url", "")
+        clone_url = item.get("clone_url", "")
+
+        row = ctk.CTkFrame(self._scroll, corner_radius=10, fg_color=T["bg_card"])
+        row.pack(fill="x", pady=4, padx=4)
+
+        info = ctk.CTkFrame(row, fg_color="transparent")
+        info.pack(side="left", fill="both", expand=True, padx=14, pady=10)
+
+        name_row = ctk.CTkFrame(info, fg_color="transparent")
+        name_row.pack(anchor="w", fill="x")
+
+        ctk.CTkLabel(
+            name_row, text=name,
+            font=("Arial", 13, "bold"),
+            text_color=T["text_primary"], anchor="w",
+        ).pack(side="left")
+
+        ctk.CTkLabel(
+            name_row, text="  [GitHub]",
+            font=("Arial", 11),
+            text_color=T.get("accent", "#4a9eff"), anchor="w",
+        ).pack(side="left")
+
+        if desc:
+            ctk.CTkLabel(
+                info, text=desc,
+                font=("Arial", 10),
+                text_color=T["text_secondary"], anchor="w",
+                wraplength=420,
+            ).pack(anchor="w")
+
+        meta_parts = [f"⭐ {stars:,}"]
+        if clone_url:
+            meta_parts.append(clone_url)
+        ctk.CTkLabel(
+            info, text="  ".join(meta_parts),
+            font=("Arial", 10),
+            text_color=T["text_secondary"], anchor="w",
+        ).pack(anchor="w")
+
+        ctk.CTkButton(
+            row, text="View Repo",
+            width=100, height=32, corner_radius=8,
+            fg_color=T["bg_hover"], hover_color=T["bg_card"],
+            text_color=T["text_primary"],
+            command=lambda url=html_url: webbrowser.open(url),
+        ).pack(side="right", padx=12, pady=10)
 
     def _render_search(self, results: list, query: str, status):
         T = self.theme
