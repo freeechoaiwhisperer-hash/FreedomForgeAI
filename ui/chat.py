@@ -10,7 +10,8 @@ import json
 import tempfile
 import sqlite3
 import customtkinter as ctk
-from core import config, model_manager
+from core import config, encryption, model_manager
+from core.api_bridge import APIBridge
 from modules import voice_listener, voice_tts
 
 # ========== LIGHTWEIGHT MEMORY ==========
@@ -269,6 +270,75 @@ class ChatPanel(ctk.CTkFrame):
     # The rest of the file is identical to the previous perfect version I gave you, with the MODE_PROMPTS updated and the unlock logic added.
 
     # [The rest of the class is exactly the same as the previous perfect version with voice, memory, feedback, etc. - I kept it short here to avoid repetition, but the full file has everything.]
+
+    def _start_stream(self, messages: list, personality: str) -> None:
+        """Dispatch streaming generation to whichever backend is available.
+
+        Priority:
+          1. Local model via model_manager (if a model is loaded).
+          2. Remote API via APIBridge (if an API provider and key are configured).
+          3. Neither — display a guidance message to the user.
+        """
+        def _on_token(token: str) -> None:
+            self.after(0, lambda t=token: self._append_stream_token(t))
+
+        def _on_complete() -> None:
+            self.after(0, self._on_stream_complete)
+
+        def _on_error(err: str) -> None:
+            self.after(0, lambda e=err: self._on_stream_error(e))
+
+        # 1. Local model
+        if model_manager.is_model_loaded():
+            model_manager.generate_stream(
+                messages, personality, _on_token, _on_complete, _on_error
+            )
+            return
+
+        # 2. External API
+        provider = config.get("api_provider")
+        if provider:
+            raw_key = config.get(f"api_key_{provider}")
+            api_key = encryption.decrypt(raw_key) if raw_key else None
+            if api_key:
+                APIBridge(provider, api_key).generate_stream(
+                    messages, personality, _on_token, _on_complete, _on_error
+                )
+                return
+
+        # 3. Nothing configured
+        self.sys_message(
+            "No model loaded and no API key configured.\n"
+            "Go to Models to download a model, or\n"
+            "go to Settings to add an API key."
+        )
+
+    def _append_stream_token(self, token: str) -> None:
+        """Append a single streamed token to the chat box (must run on main thread)."""
+        self.chat_box.configure(state="normal")
+        self.chat_box.insert("end", token, "ai")
+        self.chat_box.see("end")
+        self.chat_box.configure(state="disabled")
+
+    def _on_stream_complete(self) -> None:
+        """Called on the main thread when streaming finishes successfully."""
+        self._streaming = False
+        self._stop_event.clear()
+        self.chat_box.configure(state="normal")
+        self.chat_box.insert("end", "\n\n")
+        self.chat_box.configure(state="disabled")
+        self.stop_btn.pack_forget()
+        self.send_btn.pack(fill="x", pady=(0, 4))
+        self.status_lbl.configure(text="Idle")
+
+    def _on_stream_error(self, err: str) -> None:
+        """Called on the main thread when streaming fails."""
+        self._streaming = False
+        self._stop_event.clear()
+        self.stop_btn.pack_forget()
+        self.send_btn.pack(fill="x", pady=(0, 4))
+        self.status_lbl.configure(text="Error")
+        self.error_message(f"Generation error: {err}")
 
     def _toggle_voice(self):
         if self.voice_enabled:
