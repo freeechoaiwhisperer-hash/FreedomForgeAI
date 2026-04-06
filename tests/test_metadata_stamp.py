@@ -29,9 +29,10 @@ class TestDetectLanguage:
     def test_detect_javascript(self):
         assert metadata_stamp._detect_language("function hello() {\n  return 1;\n}") == "javascript"
 
-    def test_detect_javascript_arrow(self):
-        # Arrow functions without "function " keyword detected as python by default
-        # because _detect_language checks for "function " keyword
+    def test_detect_javascript_arrow_not_detected(self):
+        # Arrow functions without "function " keyword are not detected as JS
+        # because _detect_language requires the "function " keyword for JS detection.
+        # This is a known limitation in language detection.
         assert metadata_stamp._detect_language("const fn = () => {\n  return 1;\n}") == "python"
 
     def test_detect_c(self):
