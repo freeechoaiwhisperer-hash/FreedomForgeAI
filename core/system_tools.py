@@ -392,6 +392,81 @@ def find_temp_files() -> List[Dict]:
     return results
 
 
+# ── AI Model Scanner ─────────────────────────────────────────
+
+_MODEL_EXTENSIONS = {".gguf", ".bin", ".safetensors", ".ggml"}
+
+_BASE_MODEL_PATHS = [
+    Path.home() / ".ollama" / "models",
+    Path.home() / ".cache" / "lm-studio" / "models",
+    Path.home() / ".cache" / "huggingface" / "hub",
+    Path("/usr/share/ollama/models"),
+    Path("/var/lib/ollama/models"),
+]
+
+
+def _model_source_app(path_str: str) -> str:
+    if ".ollama" in path_str:
+        return "Ollama"
+    if "lm-studio" in path_str:
+        return "LM Studio"
+    if "huggingface" in path_str:
+        return "HuggingFace"
+    return "Found"
+
+
+def scan_for_models() -> List[Dict]:
+    """Scan well-known locations for AI model files.
+
+    Returns a list of dicts with keys:
+        path, name, size_gb, format, source_app
+    """
+    search_roots: List[Path] = list(_BASE_MODEL_PATHS)
+
+    # Add all immediate subdirectories of /mnt/ and /media/
+    for mount_parent in (Path("/mnt"), Path("/media")):
+        if mount_parent.exists():
+            try:
+                for sub in mount_parent.iterdir():
+                    if sub.is_dir():
+                        search_roots.append(sub)
+            except PermissionError:
+                pass
+
+    results: List[Dict] = []
+    seen: set = set()
+
+    for root in search_roots:
+        if not root.exists():
+            continue
+        try:
+            for entry in root.rglob("*"):
+                try:
+                    if not entry.is_file():
+                        continue
+                    if entry.suffix.lower() not in _MODEL_EXTENSIONS:
+                        continue
+                    resolved = str(entry.resolve())
+                    if resolved in seen:
+                        continue
+                    seen.add(resolved)
+                    size_bytes = entry.stat().st_size
+                    results.append({
+                        "path":       str(entry),
+                        "name":       entry.name,
+                        "size_gb":    round(size_bytes / (1024 ** 3), 3),
+                        "format":     entry.suffix.lstrip(".").lower(),
+                        "source_app": _model_source_app(str(entry)),
+                    })
+                except (PermissionError, OSError):
+                    pass
+        except (PermissionError, OSError):
+            pass
+
+    results.sort(key=lambda x: x["size_gb"], reverse=True)
+    return results
+
+
 def _dir_size_mb(path: Path) -> float:
     total = 0
     try:
