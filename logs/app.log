@@ -31,3 +31,309 @@
 2026-04-01 15:20:43  INFO      Encryption initialised (key fingerprint: a6742977f79da728)
 2026-04-01 15:20:52  INFO      Encryption initialised (key fingerprint: a6742977f79da728)
 2026-04-01 15:30:05  INFO      Encryption initialised (key fingerprint: a6742977f79da728)
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 32abced53510fcfc)
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 6d150210253d2f09)
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 9f44affaac14dc55)
+2026-04-06 10:48:30  ERROR     Encryption init failed: Key file is empty
+2026-04-06 10:48:30  WARNING   cryptography not installed — encryption disabled. Run: pip install cryptography
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 29d9448e73d0140f)
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: b292b630898c8a2e)
+2026-04-06 10:48:30  WARNING   encrypt() called but encryption is disabled
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 69ea86bc07da749b)
+2026-04-06 10:48:30  WARNING   decrypt() called but encryption is disabled
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 520c8573af1745e6)
+2026-04-06 10:48:30  ERROR     Decrypt error: 
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 3d01839caeda5452)
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 01ebf983f51c2a7a)
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 0930f4010117b56a)
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: f0db3bf540330368)
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 357d4924c73f349b)
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 1cee19f6883f29ee)
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 4d2ff528a548a6f8)
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 944a3ce2493fd1ab)
+2026-04-06 10:48:30  INFO      Encryption key generated and saved
+2026-04-06 10:48:30  INFO      Encryption initialised (key fingerprint: 7b78cbf58f2d6d05)
+2026-04-06 10:48:31  INFO      test info message
+2026-04-06 10:48:31  WARNING   test warning message
+2026-04-06 10:48:31  ERROR     test error message
+2026-04-06 10:48:31  DEBUG     test debug message
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:34  INFO      Created plugins folder: /tmp/pytest-of-runner/pytest-0/test_creates_directory_if_miss0/new_plugins
+2026-04-06 10:48:34  ERROR     Plugin failed to load (broken): oops
+2026-04-06 10:48:34  INFO      Plugins loaded: 0 — []
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:34  INFO      Plugin loaded: bad — No description
+2026-04-06 10:48:34  INFO      Plugins loaded: 1 — ['bad']
+2026-04-06 10:48:34  ERROR     Plugin handler error: boom
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:34  INFO      Created plugins folder: /tmp/pytest-of-runner/pytest-0/test_returns_empty_when_no_plu0/empty_dir
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:34  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:34  INFO      Plugin loaded: new_plugin — New plugin
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:34  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:34  INFO      Plugins loaded: 3 — ['echo', 'greet', 'new_plugin']
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 1340f6a32505dbf5)
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 0ea6a71e587a95e4)
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 39d3714f7b179b30)
+2026-04-06 10:48:48  ERROR     Encryption init failed: Key file is empty
+2026-04-06 10:48:48  WARNING   cryptography not installed — encryption disabled. Run: pip install cryptography
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 10056d9ab551e3ad)
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 0a650ed6cfc5b0a5)
+2026-04-06 10:48:48  WARNING   encrypt() called but encryption is disabled
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: c4f482ddb25dc6a7)
+2026-04-06 10:48:48  WARNING   decrypt() called but encryption is disabled
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 8e80bcc9ae172ae1)
+2026-04-06 10:48:48  ERROR     Decrypt error: 
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: c1f27f221eea6cf5)
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 6c7fca759f1aa302)
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 9833d4cb785dc2d7)
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 73a1a5838c259418)
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 464193554e042587)
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: fbb81d4a5dc81853)
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 85c413a44389cd33)
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: e48b49ca4c9f2d54)
+2026-04-06 10:48:48  INFO      Encryption key generated and saved
+2026-04-06 10:48:48  INFO      Encryption initialised (key fingerprint: 75ab54bc36a2c326)
+2026-04-06 10:48:49  INFO      test info message
+2026-04-06 10:48:49  WARNING   test warning message
+2026-04-06 10:48:49  ERROR     test error message
+2026-04-06 10:48:49  DEBUG     test debug message
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:52  INFO      Created plugins folder: /tmp/pytest-of-runner/pytest-1/test_creates_directory_if_miss0/new_plugins
+2026-04-06 10:48:52  ERROR     Plugin failed to load (broken): oops
+2026-04-06 10:48:52  INFO      Plugins loaded: 0 — []
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:52  INFO      Plugin loaded: bad — No description
+2026-04-06 10:48:52  INFO      Plugins loaded: 1 — ['bad']
+2026-04-06 10:48:52  ERROR     Plugin handler error: boom
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:52  INFO      Created plugins folder: /tmp/pytest-of-runner/pytest-1/test_returns_empty_when_no_plu0/empty_dir
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:48:52  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:48:52  INFO      Plugin loaded: new_plugin — New plugin
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:48:52  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:48:52  INFO      Plugins loaded: 3 — ['echo', 'greet', 'new_plugin']
+2026-04-06 10:49:51  INFO      Encryption key generated and saved
+2026-04-06 10:49:51  INFO      Encryption initialised (key fingerprint: a4791f17451f1025)
+2026-04-06 10:49:51  INFO      Encryption initialised (key fingerprint: 20521ae591b88fda)
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: 4e0d30e6bad724d9)
+2026-04-06 10:49:52  ERROR     Encryption init failed: Key file is empty
+2026-04-06 10:49:52  WARNING   cryptography not installed — encryption disabled. Run: pip install cryptography
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: b5cdb50f8f2b73b8)
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: 27d40ec1550c0182)
+2026-04-06 10:49:52  WARNING   encrypt() called but encryption is disabled
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: d4b68d906d785efa)
+2026-04-06 10:49:52  WARNING   decrypt() called but encryption is disabled
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: acfd65484939c1fd)
+2026-04-06 10:49:52  ERROR     Decrypt error: 
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: 996f1ebfa14b7ed8)
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: f42bf519808c9972)
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: 7e0b49dc21d8b856)
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: 522f836c31ab444f)
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: a97f52608165ec82)
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: 5142360581c7328f)
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: 0cfe74636843ad94)
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: 93bd01862b401f2d)
+2026-04-06 10:49:52  INFO      Encryption key generated and saved
+2026-04-06 10:49:52  INFO      Encryption initialised (key fingerprint: e6d587a6e6eb391e)
+2026-04-06 10:49:53  INFO      test info message
+2026-04-06 10:49:53  WARNING   test warning message
+2026-04-06 10:49:53  ERROR     test error message
+2026-04-06 10:49:53  DEBUG     test debug message
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:49:56  INFO      Created plugins folder: /tmp/pytest-of-runner/pytest-2/test_creates_directory_if_miss0/new_plugins
+2026-04-06 10:49:56  ERROR     Plugin failed to load (broken): oops
+2026-04-06 10:49:56  INFO      Plugins loaded: 0 — []
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:49:56  INFO      Plugin loaded: bad — No description
+2026-04-06 10:49:56  INFO      Plugins loaded: 1 — ['bad']
+2026-04-06 10:49:56  ERROR     Plugin handler error: boom
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:49:56  INFO      Created plugins folder: /tmp/pytest-of-runner/pytest-2/test_returns_empty_when_no_plu0/empty_dir
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 2 — ['echo', 'greet']
+2026-04-06 10:49:56  INFO      Plugin loaded: echo — Echo plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: greet — Greeting plugin
+2026-04-06 10:49:56  INFO      Plugin loaded: new_plugin — New plugin
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_handler
+2026-04-06 10:49:56  DEBUG     Plugin skipped (missing TRIGGERS or handle): no_triggers
+2026-04-06 10:49:56  INFO      Plugins loaded: 3 — ['echo', 'greet', 'new_plugin']

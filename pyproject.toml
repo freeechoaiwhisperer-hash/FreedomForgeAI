@@ -44,6 +44,10 @@ freedomforgeai = "main:main"
 Homepage = "https://github.com/freeechoaiwhisperer-hash/stupid-simpleAI"
 Repository = "https://github.com/freeechoaiwhisperer-hash/stupid-simpleAI"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["core*", "ui*", "modules*", "assets*", "utils*"]
